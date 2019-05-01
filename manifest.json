@@ -1,6 +1,6 @@
 {
-  "name": "OS navigation PWA",
-  "short_name": "OSnav",
+  "name": "SnapMap PWA",
+  "short_name": "SnapMap",
   "icons": [
 	{
 		"src": "icons/icon192px.png",
@@ -13,7 +13,7 @@
 		"type": "image/png"
 	}
   ],
-  "start_url": "/OSnav/",
+  "start_url": "/SnapMap/",
   "display": "fullscreen",
   "orientation": "portrait",
   "background_color": "#333333",
