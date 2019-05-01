@@ -25,7 +25,7 @@ var notifications=[];
 
 // EVENT LISTENERS
 console.log("add event listeners");
-id("actionButton").addEventListener("click", go);
+id("actionButton").addEventListener("click", getFix);
 id("stopButton").addEventListener("click", cease);
 // id("mapOverlay").addEventListener("click", moveTo);
 id("mapOverlay").addEventListener("touchstart", startMove);
@@ -284,6 +284,43 @@ id('metric').checked = metric;
 		// console.log("save trip "+json);
 		window.localStorage.setItem('wpTrip', json);
 	}
+	
+	function getFix() { // get fix on current location
+		if(navigator.geolocation) {
+			var opt={enableHighAccuracy: true, timeout: 15000, maximumAge: 0};
+			navigator.geolocation.getCurrentPosition(gotoFix,locationError,opt);
+		}
+	}
+	
+	function gotoFix(position) {
+		console.log("gotoFix");
+		loc.lon=position.coords.longitude;
+		loc.lat=position.coords.latitude;
+		loc.alt=position.coords.altitude;
+		if(loc.alt!=null) loc.alt=Math.round(loc.alt);
+		notify("fix at "+loc.lon+","+loc.lat+","+loc.alt);
+		bng();
+		map.x=centre.x-(loc.e-map.e)/map.xScale;
+		map.y=centre.y-(map.n-loc.n)/map.yScale;
+		id('mapHolder').style.left=map.x+'px';
+		id('mapholder').style.top=map.y+'px';
+		// centreMap();
+		document.getElementById("actionButton").innerHTML='<img src="goButton24px.svg"/>';
+		document.getElementById("actionButton").removeEventListener("click", getFix);
+		document.getElementById("actionButton").addEventListener("click", go);
+		ready=true;
+		window.setTimeout(timeUp,15000); // revert to fix button after 15 secs
+	}
+	
+	function timeUp() {
+		if(tracking) return;
+		console.log("times up - back to fix button");
+		document.getElementById("actionButton").innerHTML='<img src="fixButton24px.svg"/>';
+		document.getElementById("actionButton").removeEventListener("click", go);
+		document.getElementById("actionButton").addEventListener("click", getFix);
+		ready=false;
+	}
+
 	
 	function go() { // start tracking location
 		tracking = true;
