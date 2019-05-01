@@ -1,0 +1,21 @@
+{
+  "name": "OS navigation PWA",
+  "short_name": "OSnav",
+  "icons": [
+	{
+		"src": "icons/icon192px.png",
+		"sizes": "192x192",
+		"type": "image/png"
+	},
+	{
+		"src": "icons/icon512px.png",
+		"sizes": "512x512",
+		"type": "image/png"
+	}
+  ],
+  "start_url": "/OSnav/",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#333333",
+  "theme_color": "#333333"
+}

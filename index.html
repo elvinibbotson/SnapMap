@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+  	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  	<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  	<title>OSnav</title>
+  	<link rel="stylesheet" type="text/css" href="osNavStyles.css">
+  	<link rel="manifest" href="manifest.json">
+  	<meta name="application-name" content="OSnav">
+  	<meta name="msapplication-square150x150logo" content="icons/icon150px.png">
+  	<meta name="msapplication-square70x70logo" content="icons/icon75px.png">
+</head>
+
+<body>
+
+<header class="header">
+	<button id="menuButton" type="menu" menu="menu" class="headerButton" aria-label="Menu"></button>
+    <h1 id="heading" class="header__title">OSnav</h1>
+</header>
+
+<menu type="context" id="menu">
+	<p><menuitem id = "tracks" label = "tracks">tracks</menuitem></p>
+	<p><input type='checkbox' id='metric'>metric units</p>
+</menu>
+<main class="main">
+	<div id="mapHolder"><img id='map' src='icons/icon512px.png'/></div>
+	<div id="mapOverlay">
+		<canvas id="mapCanvas" width="100" height="100"></canvas>
+	</div>
+	<div id='actionButton' class='round-button'><img src='goButton24px.svg'/></div>
+	<div id='stopButton' class='round-button'><img src='stopButton24px.svg'/></div>
+</main>
+<div id="mapDialog" class="dialog-container">
+	<div class="dialog">
+		<div class="dialog-title">Load OS map image</div>
+		<input type="file" id="mapChooser">
+		<div class="dialog-body">This will replace anycurrent map.</div>
+    	<div class="dialog-buttons">
+			<button id="buttonCancelImport" class="button">Cancel</button>
+    	</div>
+	</div>
+</div>
+<div id="coordsDialog" class="dialog">
+	<div id='coordsHeader' class="dialog-body"></div>
+	<div class="dialog-buttons">
+		E:<input id='easting' type="number" style="width: 4em;" min=0 max=999999>
+		N:<input id='northing' type="number" style="width: 4em;" min=0 max=999999>
+		<button id="buttonSetCoords" class="button">SET</button>
+    </div>
+</div>
+<div id="saveDialog" class="dialog-container">
+    <div class="dialog">
+      <div class="dialog-title">Save Track</div>
+      <div class="dialog-body"><input type="text" id="trackName" size="30"/></div>
+      <div class="dialog-buttons">
+	      <button id="cancelButton" class="button">Cancel</button>
+        <button id="saveButton" class="button">Save</button>
+      </div>
+    </div>
+</div>
+<div id="list"></div>
+
+<script src="osNavScript.js" async></script>
+
+</body>
+
+</html>
