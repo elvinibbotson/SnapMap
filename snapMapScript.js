@@ -632,7 +632,7 @@ else {
 	       	// y=mapY-(p.lat-map.n)*24000;
 	       	// mapCanvas.lineTo(x, y);
 	    	}
-			if(tracking) mapCanvas.lineTo(centre.x,centre.y);
+			// if(tracking) mapCanvas.lineTo(centre.x,centre.y);
 		}
 		console.log("draw cross");
 		mapCanvas.moveTo(centre.x-20,centre.y); // blue cross at current location
@@ -781,20 +781,18 @@ else {
 	    return ddmm;
 	}
 	
-	function measure(type,x0,y0,x,y) {
-		var dx = x - x0;
-	    var dy = y - y0;
-        dx *= 66610; // allow for latitude
-        dy *= 111111.111; // 90 deg = 10000 km
+	function measure(type,pt1,pt2) {
+		var dx = pt2.e-pt1.e;
+	    var dy = pt2.n-pt1.n;
 		if(type=="distance") return Math.sqrt(dx * dx + dy * dy);
 		var h; // heading
-		if (dy == 0) {
-	        h = (dx > 0) ? 90 : 270;
+		if(dy==0) {
+	        h=(dx>0)?90:270;
 	    }
 	    else {
-	        h = Math.atan(dx / dy) * 180 / Math.PI;
-	        if (dy < 0) h += 180;
-	        if (h < 0) h += 360 // range 0-360
+	        h=Math.atan(dx/dy)*180 / Math.PI;
+	        if(dy<0) h+=180;
+	        if(h<0) h+=360 // range 0-360
         }
         return h;
 	}
