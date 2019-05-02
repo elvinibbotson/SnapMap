@@ -313,11 +313,11 @@ else {
 		var trip={};
 		trip.distance=decimal(distance+dist); // metres
 		trip.time=Math.round((loc.time-track[0].time)/60); // minutes
-		trip.moving=Math.round(moving/60); // minutes not stopped
-		trip.climb=climb; // metres
+		// trip.moving=Math.round(moving/60); // minutes not stopped
+		// trip.climb=climb; // metres
 		var json=JSON.stringify(trip);
 		// console.log("save trip "+json);
-		window.localStorage.setItem('wpTrip', json);
+		// window.localStorage.setItem('wpTrip', json);
 	}
 	
 	function getFix() { // get fix on current location
@@ -436,25 +436,27 @@ else {
 		lat=(fixes[0].lat+fixes[1].lat+fixes[2].lat)/3;
 		loc.alt=Math.round((fixes[0].alt+fixes[1].alt+fixes[2].alt)/3);
 		// notify(lon+","+lat+", "+loc.alt+"m accuracy:"+accuracy);
+		bng(); // convert lat/lon to BNG coords
+		
 		if(track.length<1) { // at start, initialise lastLoc and...
-		  lastLoc.time = loc.time
-		  lastLoc.lon = lon;
-		  lastLoc.lat = lat;
+			lastLoc.time = loc.time
+			lastLoc.e = loc.e;
+			lastLoc.n = loc.n;
 			addTP(); // ...add first trackpoint
 		}
 		else {
-			dist = measure("distance",lon,lat,lastLoc.lon,lastLoc.lat); // distance since last averaged fix
+			dist = measure("distance",loc,lastLoc); // distance since last averaged fix
 			notify('moved '+dist+"m");
-			if(dist > 5) moving += (loc.time - lastLoc.time);
+			// if(dist > 5) moving += (loc.time - lastLoc.time);
 		}
 		lastLoc.time = loc.time
-		lastLoc.lon = lon;
-		lastLoc.lat = lat;
+		lastLoc.e = loc.e;
+		lastLoc.n = loc.n;
 		var t=track.length-1; // most recent trackpoint
-		dist=measure("distance",lon,lat,track[t].lon,track[t].lat); // distance since last trackpoint
+		dist=measure("distance",loc,track[t]); // distance since last trackpoint
 		// var interval=loc.time-track[t].time;
 		// if(dist>0) speed = dist / interval; // current speed m/s
-		var direction=measure("heading",track[t].lon,track[t].lat,lon,lat); // heading since last trackpoint
+		var direction=measure("heading",track[t],loc); // heading since last trackpoint
 		var turn=Math.abs(direction-heading);
 		if(turn>180) turn=360-turn;
 		/*
@@ -480,7 +482,7 @@ else {
 			addTP();
 			dist = 0;
 		}
-		bng(); // convert loc/lon to BNG coords
+		// bng(); // convert loc/lon to BNG coords
 		mapX=centre.x-(loc.e-map.e)/(map.xScale*zoom);
 		mapY=centre.y-(map.n-loc.n)/(map.yScale*zoom);
 		id('mapHolder').style.left=mapX+'px';
@@ -508,15 +510,16 @@ else {
 	}
 	
 	function cease(event) {
-		notify("CEASE tracking is "+tracking+"; "+track.length+" trackpoints");
+		notify("CEASE track length is "+track.length+" trackpoints");
 		navigator.geolocation.clearWatch(geolocator);
+		tracking=false;
 		// document.getElementById("stopButton").style.display="none";
 		document.getElementById("actionButton").innerHTML='<img src="goButton24px.svg"/>';
 		document.getElementById("actionButton").removeEventListener("click", cease);
 		document.getElementById("actionButton").addEventListener("click", go);
 		// document.getElementById("heading").innerHTML = "White Peak";
 		redraw();
-		// IF TRACK HAS MORE THAN 5 TRACKPOINTS, OFFER TO SAVE TO DATABASE USING DIALOG TO GIVE DEFAULT (EDITABLE) NAME 'YYMMDD-HH:MM'
+		/* IF TRACK HAS MORE THAN 5 TRACKPOINTS, OFFER TO SAVE TO DATABASE USING DIALOG TO GIVE DEFAULT (EDITABLE) NAME 'YYMMDD-HH:MM'
 		if(track.length>1) { // ************  CHANGE TO 5 **************
 			var now = new Date();
 			var name = now.getYear()%100 + months.substr(now.getMonth()*3,3) + now.getDate() + '.'; // YYmonDD
@@ -530,6 +533,7 @@ else {
 			document.getElementById("trackName").value = name;
 			document.getElementById("saveDialog").style.display = "block";
 		}
+		*/
 	}
 
 	function redraw() {
@@ -540,6 +544,7 @@ else {
 		mapCanvas.strokeStyle = 'rgba(0,0,255,0.5)';
 		mapCanvas.fillStyle = 'rgba(0,0,0,0.7)';
 		mapCanvas.textBaseline = 'top';
+		/*
 		if(distance>0) { // display distance travelled and height climbed so far
 			var gradient = mapCanvas.createLinearGradient(0,32,0,182);
 			gradient.addColorStop(0,'white');
@@ -558,7 +563,6 @@ else {
 					mapCanvas.fillText('km',5,45);
 					d=decimal(d/1000);
 				}
-			/*	
 			}
 			else { // miles & yards
 				d=Math.round(d*1.093613); // nearest yard to latest trackpoint
@@ -568,8 +572,6 @@ else {
 					d=decimal(d/1760);
 				}
 			}
-			*/
-			/*
 			if(track.length>0) {
 				mapCanvas.fillText('time (moving)', 100, 45);
 				t=Math.floor((loc.time-track[0].time)/60); // total trip time (minutes)
@@ -592,7 +594,6 @@ else {
 			// mapCanvas.fillText(((metric)?"m":"ft")+" climbed",screen.width-5,45);
 			mapCanvas.font = 'Bold 36px Sans-Serif';
 			// mapCanvas.fillText(Math.round((metric)?climb:climb*3.281),screen.width-5,57);
-			*/
 		}
 		if(tracking && speed>0) { // if tracking show current altitude with coordinates
 			gradient = mapCanvas.createLinearGradient(0,sh-150,0,sh);
@@ -610,20 +611,26 @@ else {
 			mapCanvas.font = 'Bold 36px Sans-Serif';
 			d=Math.round((heading+11.25)/22.5); // 16 compass directions: N, NNE, NE,...
 			d=compass.substr(d*3,3); // compass point eg. NNE
-			mapCanvas.fillText(d,100,sh-20);
+			mapCanvas.fillText(d,100,screen.height-20);
 		}
+		*/
 		mapCanvas.beginPath(); // draw current track as blue breadcrumb trail
 	    if (track.length > 1) {
-			  notify("draw track - "+track.length+" trackpoints");
-	    	p = track[0];
-	    	x=mapX-(map.e-p.lon)*14400;
-	    	y=mapY-(p.lat-map.n)*24000;
-	    	mapCanvas.moveTo(x, y);
-	    	for (i = 1; i < track.length; i++) {
+			notify("draw track - "+track.length+" trackpoints");
+	    	// p = track[0];
+	    	for(i=1;i<track.length;i++) {
 	    		p = track[i];
-	       	x=mapX-(map.e-p.lon)*14400;
-	       	y=mapY-(p.lat-map.n)*24000;
-	       	mapCanvas.lineTo(x, y);
+	    		x=(p.e-map.e)/(map.xScale*zoom)+mapX;
+	    		y=(map.n-p.n)/(map.yScale*zoom)+mapY
+	    		mapCanvas.fillRect(x-2,y-2,4,4);
+	    	// x=mapX-(map.e-p.lon)*14400;
+	    	// y=mapY-(p.lat-map.n)*24000;
+	    	// mapCanvas.moveTo(x, y);
+	    	// for (i = 1; i < track.length; i++) {
+	    	//	p = track[i];
+	       	// x=mapX-(map.e-p.lon)*14400;
+	       	// y=mapY-(p.lat-map.n)*24000;
+	       	// mapCanvas.lineTo(x, y);
 	    	}
 			if(tracking) mapCanvas.lineTo(centre.x,centre.y);
 		}
@@ -637,6 +644,15 @@ else {
 		mapCanvas.moveTo(centre.x,centre.y+5);
 		mapCanvas.lineTo(centre.x,centre.y+20);
 		mapCanvas.stroke();
+		notify('draw distance');
+		if(distance>0) {
+			d = distance+dist;
+			// if(metric) { // metric units
+			d=Math.round(d);
+			if(d<1000) d+="m";
+			else d=decimal(d/1000)+"km";
+			mapCanvas.fillText(d,centre.x+5,centre.y+5);
+		}
 	}
 	/*
 	function centreMap() { // move map to current location
