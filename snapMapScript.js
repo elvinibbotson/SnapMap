@@ -30,8 +30,8 @@ var notifications=[];
 
 // EVENT LISTENERS
 console.log("add event listeners");
-id("actionButton").addEventListener("click", getFix);
-id("stopButton").addEventListener("click", cease);
+id("actionButton").addEventListener("click", go);
+// id("stopButton").addEventListener("click", cease);
 // id("mapOverlay").addEventListener("click", moveTo);
 id("mapOverlay").addEventListener("touchstart", startMove);
 // id("mapOverlay").addEventListener("mousedown", startMove);
@@ -172,10 +172,10 @@ mapCanvas = id("mapCanvas").getContext("2d"); // set up drawing canvas
 id("mapCanvas").width = screen.width;
 id("mapCanvas").height = screen.height;
 id("actionButton").style.left=(screen.width-70)+'px';
-id("actionButton").style.top=(screen.height-150)+'px';
-id("stopButton").style.left=(20)+'px';
-id("stopButton").style.top=(screen.height-70)+'px';
-console.log("buttons moved!");
+id("actionButton").style.top=(screen.height-70)+'px';
+// id("stopButton").style.left=(20)+'px';
+// id("stopButton").style.top=(screen.height-70)+'px';
+console.log("action button moved!");
 id("actionButton").style.display='block';
 id("map").style.display = 'block';
 /* loading map may need onload() action
@@ -366,10 +366,10 @@ else {
 		loc = {};
 		lastLoc = {};
 		distance = 0;
-		time0 = moving = 0;
-		heading = 0;
-		speed = 0;
-		hi = lo = climb = 0;
+		// time0 = moving = 0;
+		// heading = 0;
+		// speed = 0;
+		// hi = lo = climb = 0;
 		notify("start tracking");
 		fix=0;
 		fixes=[];
@@ -379,9 +379,9 @@ else {
     	} else  {
        		alert("Geolocation is not supported by this browser.");
     	}
-		document.getElementById("actionButton").innerHTML='<img src="pauseButton24px.svg"/>';
+		document.getElementById("actionButton").innerHTML='<img src="stopButton24px.svg"/>';
 		document.getElementById("actionButton").removeEventListener("click", go);
-		document.getElementById("actionButton").addEventListener("click", stopStart);
+		document.getElementById("actionButton").addEventListener("click", cease);
 		/* test BNG conversion
 		console.log("convert 52*39'27.2531N, 1*43'4.5177W to BNG");
 		lat=52.6575703;
@@ -452,11 +452,12 @@ else {
 		lastLoc.lat = lat;
 		var t=track.length-1; // most recent trackpoint
 		dist=measure("distance",lon,lat,track[t].lon,track[t].lat); // distance since last trackpoint
-		var interval=loc.time-track[t].time;
-		if(dist>0) speed = dist / interval; // current speed m/s
+		// var interval=loc.time-track[t].time;
+		// if(dist>0) speed = dist / interval; // current speed m/s
 		var direction=measure("heading",track[t].lon,track[t].lat,lon,lat); // heading since last trackpoint
 		var turn=Math.abs(direction-heading);
 		if(turn>180) turn=360-turn;
+		/*
 		if((hi == 0) || ((lo - loc.alt) > 5)) {
 			hi = lo = loc.alt; // reset lo and hi at first trackpoint or new lo-point
 			notify("new lo (and hi)");
@@ -472,6 +473,7 @@ else {
 			notify("OTT - new hi & lo");
 		}
 		notify("lo:"+lo+" hi:"+hi+" climb:"+climb);
+		*/
 		if((dist>100)||(turn>30)) { // add trackpoint after 100m or when direction changes > 30*
 			distance += dist;
 			heading = Math.round(direction);
@@ -479,10 +481,11 @@ else {
 			dist = 0;
 		}
 		bng(); // convert loc/lon to BNG coords
-		mapX=centre.x-(loc.e-map.e)/map.xScale;
-		mapY=centre.y-(map.n-loc.n)/map.yScale;
+		mapX=centre.x-(loc.e-map.e)/(map.xScale*zoom);
+		mapY=centre.y-(map.n-loc.n)/(map.yScale*zoom);
 		id('mapHolder').style.left=mapX+'px';
 		id('mapholder').style.top=mapY+'px';
+		id('heading').innerHTML=loc.e+' '+loc.n;
 		// centreMap();
 	}
 	
@@ -507,11 +510,11 @@ else {
 	function cease(event) {
 		notify("CEASE tracking is "+tracking+"; "+track.length+" trackpoints");
 		navigator.geolocation.clearWatch(geolocator);
-		document.getElementById("stopButton").style.display="none";
+		// document.getElementById("stopButton").style.display="none";
 		document.getElementById("actionButton").innerHTML='<img src="goButton24px.svg"/>';
-		document.getElementById("actionButton").removeEventListener("click", stopStart);
+		document.getElementById("actionButton").removeEventListener("click", cease);
 		document.getElementById("actionButton").addEventListener("click", go);
-		document.getElementById("heading").innerHTML = "White Peak";
+		// document.getElementById("heading").innerHTML = "White Peak";
 		redraw();
 		// IF TRACK HAS MORE THAN 5 TRACKPOINTS, OFFER TO SAVE TO DATABASE USING DIALOG TO GIVE DEFAULT (EDITABLE) NAME 'YYMMDD-HH:MM'
 		if(track.length>1) { // ************  CHANGE TO 5 **************
@@ -566,6 +569,7 @@ else {
 				}
 			}
 			*/
+			/*
 			if(track.length>0) {
 				mapCanvas.fillText('time (moving)', 100, 45);
 				t=Math.floor((loc.time-track[0].time)/60); // total trip time (minutes)
@@ -588,6 +592,7 @@ else {
 			// mapCanvas.fillText(((metric)?"m":"ft")+" climbed",screen.width-5,45);
 			mapCanvas.font = 'Bold 36px Sans-Serif';
 			// mapCanvas.fillText(Math.round((metric)?climb:climb*3.281),screen.width-5,57);
+			*/
 		}
 		if(tracking && speed>0) { // if tracking show current altitude with coordinates
 			gradient = mapCanvas.createLinearGradient(0,sh-150,0,sh);
@@ -607,7 +612,7 @@ else {
 			d=compass.substr(d*3,3); // compass point eg. NNE
 			mapCanvas.fillText(d,100,sh-20);
 		}
-		mapCanvas.beginPath(); // draw current track as blue line
+		mapCanvas.beginPath(); // draw current track as blue breadcrumb trail
 	    if (track.length > 1) {
 			  notify("draw track - "+track.length+" trackpoints");
 	    	p = track[0];
