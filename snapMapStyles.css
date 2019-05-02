@@ -110,6 +110,14 @@ input, label, select {
     background: url(menuButton24px.svg) center center no-repeat;
 }
 
+.header #minusButton {
+    background: url(minusButton24px.svg) center center no-repeat;
+}
+
+.header #plusButton {
+    background: url(plusButton24px.svg) center center no-repeat;
+}
+
 .deleteButton {
   width: 24px;
   height: 24px;

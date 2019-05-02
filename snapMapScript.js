@@ -4,14 +4,19 @@ var centre={}; // coordinates of screen centre
 var mapCanvas; // canvas for on-screen graphics
 var refNW={}; // two reference points
 var refSE={};
+var mapName; // name of current map file
 var map={}; // properties of current map
+var mapX=0; // position of map top/left relative to screen
+var mapY=0;
+var zoom=1; // map magnification (inverse): 1 (max size), 2, 4, 8, 16 (1/16th scale)
 var x, y, x0, y0; // horizontal and vertical coordinates/measurements
 var offset = {};
 var status; // location & trip data
 var json;
 var tracking = false;
-var metric = false;
+// var metric = false;
 var geolocator = null;
+var lon, lat; // longitude and latitude (degrees)
 var loc={};
 var lastLoc = {};
 var fix;
@@ -37,12 +42,20 @@ id("menuButton").addEventListener("click", function() {
 	var display = id("menu").style.display;
 	id("menu").style.display = (display=="block")?"none":"block";
 });
+id('minusButton').addEventListener('click', function() {
+	console.log("zoom out");
+});
+id('plusButton').addEventListener('click', function() {
+	console.log("zoom in");
+});
+/*
 id("metric").addEventListener("change", function() {
 	metric=this.checked;
 	window.localStorage.setItem('metric', metric);
 	console.log("metric is "+metric);
 	id("menu").style.display = "none";
 });
+*/
 id("tracks").addEventListener("click", listTracks);
 id('buttonSetCoords').addEventListener('click', function() {
 	var easting=id('easting').value;
@@ -50,8 +63,8 @@ id('buttonSetCoords').addEventListener('click', function() {
 	console.log('coords: '+easting+','+northing+" status: "+status);
 	if(status<1) { // NW reference point
 		status++;
-		refNW.x=centre.x-map.x;
-		refNW.y=centre.y-map.y;
+		refNW.x=centre.x-mapX;
+		refNW.y=centre.y-mapY;
 		refNW.e=parseInt(easting);
 		refNW.n=parseInt(northing);
 		console.log("NW ref.pt: "+refNW.x+","+refNW.y+"; "+refNW.e+","+refNW.n);
@@ -60,8 +73,8 @@ id('buttonSetCoords').addEventListener('click', function() {
 		id('northing').value='';
 	}
 	else {
-		refSE.x=centre.x-map.x;
-		refSE.y=centre.y-map.y;
+		refSE.x=centre.x-mapX;
+		refSE.y=centre.y-mapY;
 		refSE.e=parseInt(easting);
 		refSE.n=parseInt(northing);
 		console.log("SE ref.pt: "+refSE.x+","+refSE.y+"; "+refSE.e+","+refSE.n);
@@ -72,7 +85,7 @@ id('buttonSetCoords').addEventListener('click', function() {
 		map.e=refNW.e-refNW.x*map.xScale;
 		map.n=refNW.n+refNW.y*map.yScale;
 		console.log("map.e: "+map.e+"; map.n: "+map.n);
-		window.localStorage.setItem(map.name,JSON.stringify(map));
+		window.localStorage.setItem(mapName,JSON.stringify(map));
 		id('coordsDialog').style.display='none';
 		id('actionButton').style.display='block';
 	}
@@ -84,24 +97,24 @@ id("cancelButton").addEventListener("click", function() {
 id("mapChooser").addEventListener('change', function() { // LOAD MAP IMAGE
 	var file = id('mapChooser').files[0];
 	console.log("map: "+file+" name: "+file.name);
-	map.name=file.name;
+	mapName=file.name;
 	var fileReader=new FileReader();
 	fileReader.addEventListener('load', function(evt) {
 		id('map').src=evt.target.result;
 		id('mapHolder').style.left=id('mapHolder').style.top=0;
-		map.x=map.y=0;
-		map.w=id('map').width;
-		map.h=id('map').height;
-		console.log("map size: "+map.w+"x"+map.h);
+		mapX=mapY=0;
+		// map.w=id('map').width;
+		// map.h=id('map').height;
+		// console.log("map size: "+map.w+"x"+map.h);
 		redraw();
 		id('mapDialog').style.display='none';
-		var data=window.localStorage.getItem(map.name);
-		console.log("saved data for "+map.name+": "+data);
+		var data=window.localStorage.getItem(mapName);
+		console.log("saved data for "+mapName+": "+data);
 		if(data!=null) {
 			map=JSON.parse(data);
-			// map=window.localStorage.getItem(map.name);
+			// map=window.localStorage.getItem(mapName);
 			id('actionButton').style.display='block';
-			console.log("loaded data for map "+map.name+": "+map.w+"x"+map.h+" at "+map.e+","+map.n+"scales: "+map.xScale+"x"+map.yScale);
+			console.log("loaded data for map "+mapName+" at "+map.e+","+map.n+"scales: "+map.xScale+"x"+map.yScale);
 		}
 		else {
 			id('coordsHeader').innerHTML="NW reference point";
@@ -119,8 +132,6 @@ id("mapChooser").addEventListener('change', function() { // LOAD MAP IMAGE
   	fileReader.readAsDataURL(file);
   },false);
 
-// loc.lat = 53.2;
-// loc.lon = -1.75;
 centre.x=screen.width/2;
 centre.y=screen.height/2;
 console.log("centre at "+centre.x+","+centre.y);
@@ -130,7 +141,7 @@ mapCanvas = id("mapCanvas").getContext("2d"); // set up drawing canvas
 id("mapCanvas").width = screen.width;
 id("mapCanvas").height = screen.height;
 id("actionButton").style.left=(screen.width-70)+'px';
-id("actionButton").style.top=(screen.height-70)+'px';
+id("actionButton").style.top=(screen.height-150)+'px';
 id("stopButton").style.left=(20)+'px';
 id("stopButton").style.top=(screen.height-70)+'px';
 console.log("buttons moved!");
@@ -140,14 +151,15 @@ status=window.localStorage.getItem('map'); // URL of current map
 console.log('saved map: '+status);
 if(status!='null') {
 	id('map').src=status;
-	status = window.localStorage.getItem('osNavLocation'); // recover last location
+	status = window.localStorage.getItem('loc'); // recover last location
 	console.log("location status: "+status);
 	if(status!='null') {
 		json = JSON.parse(status);
-		if((json.lat>=53)&&(json.lat<=53.3333)) 	loc.lat = json.lat;
-		if((json.lon>=-2)&&(json.lon<=-1.5)) loc.lon = json.lon;
+		loc.e = json.e;
+		loc.n = json.n;
 	}
-	centreMap(); // go to saved location
+	// centreMap(); // go to saved location
+	/* saved track
 	status = window.localStorage.getItem('osNavTrip'); // recover previous trip stats
 	if(status) {
 		json=JSON.parse(status);
@@ -165,13 +177,14 @@ if(status!='null') {
 		else text += Math.round(json.climb*3.281)+"ft climbed";
 		alert(text);
 	}
+	*/
 }
 else {
 	id('actionButton').style.display='none';
 	id('mapDialog').style.display='block';
 }
-metric = window.localStorage.getItem("metric");
-id('metric').checked = metric;
+// metric = window.localStorage.getItem("metric");
+// id('metric').checked = metric;
 	
 	
 	function listTracks() {
@@ -225,19 +238,19 @@ id('metric').checked = metric;
 		x=touches[0].clientX;
 		y=touches[0].clientY;
 		// notify("drag by "+x+"x"+y+"px");
-		map.x+=(x-x0);
-		map.y+=(y-y0);
-		// console.log('map at '+map.x+','+map.y);
-		id('mapHolder').style.left=map.x+'px';
-		id('mapHolder').style.top=map.y+'px';
+		mapX+=(x-x0);
+		mapY+=(y-y0);
+		// console.log('map at '+mapX+','+mapY);
+		id('mapHolder').style.left=mapX+'px';
+		id('mapHolder').style.top=mapY+'px';
 		// loc.lon-=(x-x0)/14400;
 		// loc.lat+=(y-y0)/24000;
 		x0=x;
 		y0=y;
 		// centreMap();
 		if(map.xScale>0) { // once map is calibrated, adjust and display coords
-			x=centre.x-map.x;
-			y=centre.y-map.y;
+			x=centre.x-mapX;
+			y=centre.y-mapY;
 			var e=Math.round(x*map.xScale+map.e);
 			var n=Math.round(map.n-y*map.yScale);
 			id('heading').innerHTML=e+' '+n;
@@ -268,8 +281,8 @@ id('metric').checked = metric;
 	function addTP() {
 		notify("add trackpoint "+track.length);
 		var tp={};
-		tp.lon=loc.lon;
-		tp.lat=loc.lat;
+		tp.e=loc.e;
+		tp.n=loc.n;
 		tp.alt=loc.alt;
 		tp.time=loc.time;
 		track.push(tp);
@@ -294,16 +307,16 @@ id('metric').checked = metric;
 	
 	function gotoFix(position) {
 		console.log("gotoFix");
-		loc.lon=position.coords.longitude;
-		loc.lat=position.coords.latitude;
+		lon=position.coords.longitude;
+		lat=position.coords.latitude;
 		loc.alt=position.coords.altitude;
 		if(loc.alt!=null) loc.alt=Math.round(loc.alt);
-		notify("fix at "+loc.lon+","+loc.lat+","+loc.alt);
+		notify("fix at "+lon+","+lat+","+loc.alt);
 		bng();
-		map.x=centre.x-(loc.e-map.e)/map.xScale;
-		map.y=centre.y-(map.n-loc.n)/map.yScale;
-		id('mapHolder').style.left=map.x+'px';
-		id('mapholder').style.top=map.y+'px';
+		mapX=centre.x-(loc.e-map.e)/map.xScale;
+		mapY=centre.y-(map.n-loc.n)/map.yScale;
+		id('mapHolder').style.left=mapX+'px';
+		id('mapholder').style.top=mapY+'px';
 		// centreMap();
 		document.getElementById("actionButton").innerHTML='<img src="goButton24px.svg"/>';
 		document.getElementById("actionButton").removeEventListener("click", getFix);
@@ -346,8 +359,8 @@ id('metric').checked = metric;
 		document.getElementById("actionButton").addEventListener("click", stopStart);
 		/* test BNG conversion
 		console.log("convert 52*39'27.2531N, 1*43'4.5177W to BNG");
-		loc.lat=52.6575703;
-		loc.lon=1.71792158;
+		lat=52.6575703;
+		lon=1.71792158;
 		bng();
 		*/
 	}
@@ -394,29 +407,29 @@ id('metric').checked = metric;
 		fix=0; // reset to get next three sample fixes
 		var now=new Date();
 		loc.time=Math.round(now.getTime()/1000); // whole seconds
-		loc.lon=(fixes[0].lon+fixes[1].lon+fixes[2].lon)/3; // average location data
-		loc.lat=(fixes[0].lat+fixes[1].lat+fixes[2].lat)/3;
+		lon=(fixes[0].lon+fixes[1].lon+fixes[2].lon)/3; // average location data
+		lat=(fixes[0].lat+fixes[1].lat+fixes[2].lat)/3;
 		loc.alt=Math.round((fixes[0].alt+fixes[1].alt+fixes[2].alt)/3);
-		// notify(loc.lon+","+loc.lat+", "+loc.alt+"m accuracy:"+accuracy);
+		// notify(lon+","+lat+", "+loc.alt+"m accuracy:"+accuracy);
 		if(track.length<1) { // at start, initialise lastLoc and...
 		  lastLoc.time = loc.time
-		  lastLoc.lon = loc.lon;
-		  lastLoc.lat = loc.lat;
+		  lastLoc.lon = lon;
+		  lastLoc.lat = lat;
 			addTP(); // ...add first trackpoint
 		}
 		else {
-			dist = measure("distance",loc.lon,loc.lat,lastLoc.lon,lastLoc.lat); // distance since last averaged fix
+			dist = measure("distance",lon,lat,lastLoc.lon,lastLoc.lat); // distance since last averaged fix
 			notify('moved '+dist+"m");
 			if(dist > 5) moving += (loc.time - lastLoc.time);
 		}
 		lastLoc.time = loc.time
-		lastLoc.lon = loc.lon;
-		lastLoc.lat = loc.lat;
+		lastLoc.lon = lon;
+		lastLoc.lat = lat;
 		var t=track.length-1; // most recent trackpoint
-		dist=measure("distance",loc.lon,loc.lat,track[t].lon,track[t].lat); // distance since last trackpoint
+		dist=measure("distance",lon,lat,track[t].lon,track[t].lat); // distance since last trackpoint
 		var interval=loc.time-track[t].time;
 		if(dist>0) speed = dist / interval; // current speed m/s
-		var direction=measure("heading",track[t].lon,track[t].lat,loc.lon,loc.lat); // heading since last trackpoint
+		var direction=measure("heading",track[t].lon,track[t].lat,lon,lat); // heading since last trackpoint
 		var turn=Math.abs(direction-heading);
 		if(turn>180) turn=360-turn;
 		if((hi == 0) || ((lo - loc.alt) > 5)) {
@@ -441,10 +454,10 @@ id('metric').checked = metric;
 			dist = 0;
 		}
 		bng(); // convert loc/lon to BNG coords
-		map.x=centre.x-(loc.e-map.e)/map.xScale;
-		map.y=centre.y-(map.n-loc.n)/map.yScale;
-		id('mapHolder').style.left=map.x+'px';
-		id('mapholder').style.top=map.y+'px';
+		mapX=centre.x-(loc.e-map.e)/map.xScale;
+		mapY=centre.y-(map.n-loc.n)/map.yScale;
+		id('mapHolder').style.left=mapX+'px';
+		id('mapholder').style.top=mapY+'px';
 		// centreMap();
 	}
 	
@@ -510,13 +523,14 @@ id('metric').checked = metric;
 			mapCanvas.font = 'Bold 16px Sans-Serif';
 			mapCanvas.textAlign = 'left';
 			d = distance+dist;
-			if(metric) { // metric units
+			// if(metric) { // metric units
 				d=Math.round(d);
 				if(d<1000) mapCanvas.fillText('m',5,45);
 				else {
 					mapCanvas.fillText('km',5,45);
 					d=decimal(d/1000);
 				}
+			/*	
 			}
 			else { // miles & yards
 				d=Math.round(d*1.093613); // nearest yard to latest trackpoint
@@ -526,6 +540,7 @@ id('metric').checked = metric;
 					d=decimal(d/1760);
 				}
 			}
+			*/
 			if(track.length>0) {
 				mapCanvas.fillText('time (moving)', 100, 45);
 				t=Math.floor((loc.time-track[0].time)/60); // total trip time (minutes)
@@ -545,9 +560,9 @@ id('metric').checked = metric;
 			mapCanvas.fillText(d,5,57);
 			mapCanvas.font = 'Bold 16px Sans-Serif';
 			mapCanvas.textAlign = 'right';
-			mapCanvas.fillText(((metric)?"m":"ft")+" climbed",screen.width-5,45);
+			// mapCanvas.fillText(((metric)?"m":"ft")+" climbed",screen.width-5,45);
 			mapCanvas.font = 'Bold 36px Sans-Serif';
-			mapCanvas.fillText(Math.round((metric)?climb:climb*3.281),screen.width-5,57);
+			// mapCanvas.fillText(Math.round((metric)?climb:climb*3.281),screen.width-5,57);
 		}
 		if(tracking && speed>0) { // if tracking show current altitude with coordinates
 			gradient = mapCanvas.createLinearGradient(0,sh-150,0,sh);
@@ -559,9 +574,9 @@ id('metric').checked = metric;
 			mapCanvas.textBaseline = 'alphabetic';
 			mapCanvas.textAlign = 'left';
 			mapCanvas.font = 'Bold 60px Sans-Serif';
-			mapCanvas.fillText(Math.round(((metric)?3.6:2.237)*speed), 5,sh-20);
+			// mapCanvas.fillText(Math.round(((metric)?3.6:2.237)*speed), 5,sh-20);
 			mapCanvas.font = 'Bold 16px Sans-Serif';
-			mapCanvas.fillText((metric)?"kph":"mph", 5,sh-5);
+			// mapCanvas.fillText((metric)?"kph":"mph", 5,sh-5);
 			mapCanvas.font = 'Bold 36px Sans-Serif';
 			d=Math.round((heading+11.25)/22.5); // 16 compass directions: N, NNE, NE,...
 			d=compass.substr(d*3,3); // compass point eg. NNE
@@ -571,13 +586,13 @@ id('metric').checked = metric;
 	    if (track.length > 1) {
 			  notify("draw track - "+track.length+" trackpoints");
 	    	p = track[0];
-	    	x=map.x-(map.e-p.lon)*14400;
-	    	y=map.y-(p.lat-map.n)*24000;
+	    	x=mapX-(map.e-p.lon)*14400;
+	    	y=mapY-(p.lat-map.n)*24000;
 	    	mapCanvas.moveTo(x, y);
 	    	for (i = 1; i < track.length; i++) {
 	    		p = track[i];
-	       	x=map.x-(map.e-p.lon)*14400;
-	       	y=map.y-(p.lat-map.n)*24000;
+	       	x=mapX-(map.e-p.lon)*14400;
+	       	y=mapY-(p.lat-map.n)*24000;
 	       	mapCanvas.lineTo(x, y);
 	    	}
 			if(tracking) mapCanvas.lineTo(centre.x,centre.y);
@@ -593,16 +608,16 @@ id('metric').checked = metric;
 		mapCanvas.lineTo(centre.x,centre.y+20);
 		mapCanvas.stroke();
 	}
-	
+	/*
 	function centreMap() { // move map to current location
 		// notify("centre map");
 	  var i, x, y;
-	  map.x = (map.e - loc.lon) * 14400 + sw / 2;
-	  map.y = (loc.lat - map.n) * 24000 + sh / 2;
-		// console.log("map position: "+map.x+", "+map.y);
+	  mapX = (map.e - loc.lon) * 14400 + sw / 2;
+	  mapY = (loc.lat - map.n) * 24000 + sh / 2;
+		// console.log("map position: "+mapX+", "+mapY);
 		var map = document.getElementById("map");
-		map.style.left = map.x+"px";
-		map.style.top = map.y+"px";
+		map.style.left = mapX+"px";
+		map.style.top = mapY+"px";
 		var string = dm(loc.lat, true) + " " + dm(loc.lon, false) + " ";
 		if(tracking) string += (metric)?loc.alt+"m":Math.round(3.281*loc.alt)+"ft";
 		document.getElementById('heading').innerHTML = string;
@@ -611,7 +626,7 @@ id('metric').checked = metric;
 		// console.log("save location "+json);
 		window.localStorage.setItem('wpLocation', json);
 	}
-	
+	*/
 	function saveTrack() {
 	  var name = document.getElementById("trackName").value;
 	  var names=[];
@@ -638,8 +653,8 @@ id('metric').checked = metric;
 	}
 	
 	function bng() { // convert lon/lat to BNG coords
-		var p=loc.lat*Math.PI/180; // loc/lat in radians
-		var q=loc.lon*Math.PI/180;
+		var p=lat*Math.PI/180; // loc/lat in radians
+		var q=lon*Math.PI/180;
 		var a=6377563.396; // Airy major and minor semi-axes
 		var b=6356256.909;
 		var f0=0.9996012717; // BNG scale factor on central meridian
