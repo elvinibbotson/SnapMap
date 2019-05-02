@@ -8,7 +8,7 @@ var mapName; // name of current map file
 var map={}; // properties of current map
 var mapX=0; // position of map top/left relative to screen
 var mapY=0;
-var zoom=1; // map magnification (inverse): 1 (max size), 2, 4, 8, 16 (1/16th scale)
+var zoom=1; // map magnification (inverse): 1 (max size), 2, 4, 8 (1/8th scale)
 var x, y, x0, y0; // horizontal and vertical coordinates/measurements
 var offset = {};
 var status; // location & trip data
@@ -42,11 +42,32 @@ id("menuButton").addEventListener("click", function() {
 	var display = id("menu").style.display;
 	id("menu").style.display = (display=="block")?"none":"block";
 });
+id('notifications').addEventListener('click',showNotifications);
 id('minusButton').addEventListener('click', function() {
-	console.log("zoom out");
+	console.log("zoom out loc.e: "+loc.e+" map.e: "+map.e+' xScale: '+map.xScale);
+	if(zoom<8) {
+		zoom*=2;
+		id('map').width/=2;
+		// id('map').height/=2;
+		console.log("zoom: "+zoom+"; map size; "+id('map').width+"x"+id('map').height);
+		mapX=centre.x-(loc.e-map.e)/(map.xScale*zoom);
+		mapY=centre.y-(map.n-loc.n)/(map.yScale*zoom);
+		console.log('at '+mapX+','+mapY);
+		id('mapHolder').style.left=mapX+'px';
+		id('mapHolder').style.top=mapY+'px';
+	}
 });
 id('plusButton').addEventListener('click', function() {
 	console.log("zoom in");
+	if(zoom>1) {
+		zoom/=2;
+		id('map').width*=2;
+		// id('map').style.height*=2;
+		mapX=centre.x-(loc.e-map.e)/(map.xScale*zoom);
+		mapY=centre.y-(map.n-loc.n)/(map.yScale*zoom);
+		id('mapHolder').style.left=mapX+'px';
+		id('mapHolder').style.top=mapY+'px';
+	}
 });
 /*
 id("metric").addEventListener("change", function() {
@@ -82,10 +103,13 @@ id('buttonSetCoords').addEventListener('click', function() {
 		map.yScale=(refNW.n-refSE.n)/(refSE.y-refNW.y);
 		console.log("scale: "+map.xScale+"x"+map.yScale);
 		// calculate mapW, mapN
-		map.e=refNW.e-refNW.x*map.xScale;
-		map.n=refNW.n+refNW.y*map.yScale;
+		map.e=refNW.e-refNW.x*map.xScale*zoom;
+		map.n=refNW.n+refNW.y*map.yScale*zoom;
 		console.log("map.e: "+map.e+"; map.n: "+map.n);
 		window.localStorage.setItem(mapName,JSON.stringify(map));
+		loc.e=refSE.e;
+		loc.n=refSE.n;
+		id('heading').innerHTML=loc.e+' '+loc.n;
 		id('coordsDialog').style.display='none';
 		id('actionButton').style.display='block';
 	}
@@ -117,6 +141,11 @@ id("mapChooser").addEventListener('change', function() { // LOAD MAP IMAGE
 			// map=window.localStorage.getItem(mapName);
 			id('actionButton').style.display='block';
 			console.log("loaded data for map "+mapName+" at "+map.e+","+map.n+"scales: "+map.xScale+"x"+map.yScale);
+			loc.e=Math.round(map.e+centre.x*map.xScale*zoom);
+			loc.n=Math.round(map.n-centre.y*map.yScale*zoom);
+			id('heading').innerHTML=loc.e+' '+loc.n;
+			console.log("save mapName");
+			window.localStorage.setItem('map',mapName);
 		}
 		else {
 			id('coordsHeader').innerHTML="NW reference point";
@@ -149,10 +178,27 @@ id("stopButton").style.top=(screen.height-70)+'px';
 console.log("buttons moved!");
 id("actionButton").style.display='block';
 id("map").style.display = 'block';
+/* loading map may need onload() action
 status=window.localStorage.getItem('map'); // URL of current map
 console.log('saved map: '+status);
 if(status!='null') {
-	id('map').src=status;
+	mapName=id('map').src=status;
+	console.log("map loaded "+id('map').width+"x"+id('map').height);
+	var data=window.localStorage.getItem(mapName);
+	console.log("saved data for "+mapName+": "+data);
+	if(data!=null) {
+		map=JSON.parse(data);
+		// map=window.localStorage.getItem(mapName);
+		id('actionButton').style.display='block';
+		console.log("loaded data for map "+mapName+" at "+map.e+","+map.n+"scales: "+map.xScale+"x"+map.yScale);
+	}
+	else {
+		id('coordsHeader').innerHTML="NW reference point";
+		id('easting').value='';
+		id('northing').value='';
+		status=0;
+		id('coordsDialog').style.display='block';
+	}
 	status = window.localStorage.getItem('loc'); // recover last location
 	console.log("location status: "+status);
 	if(status!='null') {
@@ -161,32 +207,12 @@ if(status!='null') {
 		loc.n = json.n;
 	}
 	// centreMap(); // go to saved location
-	/* saved track
-	status = window.localStorage.getItem('osNavTrip'); // recover previous trip stats
-	if(status) {
-		json=JSON.parse(status);
-		var text="last trip distance: ";
-		if(metric) text += decimal(json.distance/1000)+"km";
-		else text += decimal(json.distance/1093.6)+"miles";
-		text += " in ";
-		if(json.time>60) text+=Math.floor(json.time/60)+" hr ";
-		text+=json.time%60+" min (";
-		if(json.moving>60) text+=Math.floor(json.moving/60)+"hr ";
-		text+=json.moving%60+" min); speed: ";
-		if(metric) text += Math.round(json.distance*60/1000/json.time)+"kph; ";
-		else text += Math.round(json.distance*60/1093.6/json.time)+"mph; ";
-		if(metric ) text += json.climb+" m climbed";
-		else text += Math.round(json.climb*3.281)+"ft climbed";
-		alert(text);
-	}
-	*/
 }
 else {
+*/
 	id('actionButton').style.display='none';
 	id('mapDialog').style.display='block';
-}
-// metric = window.localStorage.getItem("metric");
-// id('metric').checked = metric;
+//}
 	
 /*	
 	function listTracks() {
@@ -233,7 +259,7 @@ else {
 		var touches=event.changedTouches;
 		x=touches[0].clientX;
 		y=touches[0].clientY;
-		// notify("drag by "+x+"x"+y+"px");
+		// console.log("drag by "+x+"x"+y+"px");
 		mapX+=(x-x0);
 		mapY+=(y-y0);
 		// console.log('map at '+mapX+','+mapY);
@@ -247,9 +273,9 @@ else {
 		if(map.xScale>0) { // once map is calibrated, adjust and display coords
 			x=centre.x-mapX;
 			y=centre.y-mapY;
-			var e=Math.round(x*map.xScale+map.e);
-			var n=Math.round(map.n-y*map.yScale);
-			id('heading').innerHTML=e+' '+n;
+			loc.e=Math.round(map.e+x*map.xScale*zoom);
+			loc.n=Math.round(map.n-y*map.yScale*zoom);
+			id('heading').innerHTML=loc.e+' '+loc.n;
 		}
 	}
 	/*
@@ -295,6 +321,7 @@ else {
 	}
 	
 	function getFix() { // get fix on current location
+	alert('get fix');
 		if(navigator.geolocation) {
 			var opt={enableHighAccuracy: true, timeout: 15000, maximumAge: 0};
 			navigator.geolocation.getCurrentPosition(gotoFix,locationError,opt);
@@ -309,10 +336,12 @@ else {
 		if(loc.alt!=null) loc.alt=Math.round(loc.alt);
 		notify("fix at "+lon+","+lat+","+loc.alt);
 		bng();
+		alert('fix at '+loc.e+" "+loc.n);
 		mapX=centre.x-(loc.e-map.e)/map.xScale;
 		mapY=centre.y-(map.n-loc.n)/map.yScale;
 		id('mapHolder').style.left=mapX+'px';
-		id('mapholder').style.top=mapY+'px';
+		id('mapHolder').style.top=mapY+'px';
+		id('heading').innerHTML=loc.e+' '+loc.n;
 		// centreMap();
 		document.getElementById("actionButton").innerHTML='<img src="goButton24px.svg"/>';
 		document.getElementById("actionButton").removeEventListener("click", getFix);
@@ -702,8 +731,8 @@ else {
 		var dq4=dq3*dq;
 		var dq5=dq4*dq;
 		var dq6=dq5*dq;
-		loc.n=v1+v2*dq2+v3*dq4+v4*dq6;
-		loc.e=e0+v5*dq+v6*dq3+v7*dq5;
+		loc.n=Math.round(v1+v2*dq2+v3*dq4+v4*dq6);
+		loc.e=Math.round(e0+v5*dq+v6*dq3+v7*dq5);
 		console.log("fix is at BNG "+loc.e+" "+loc.n);	
 	}
 	
