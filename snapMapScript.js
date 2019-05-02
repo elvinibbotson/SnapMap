@@ -437,7 +437,7 @@ else {
 		loc.alt=Math.round((fixes[0].alt+fixes[1].alt+fixes[2].alt)/3);
 		// notify(lon+","+lat+", "+loc.alt+"m accuracy:"+accuracy);
 		bng(); // convert lat/lon to BNG coords
-		
+		notify('fix at '+loc.e+" "+loc.n);
 		if(track.length<1) { // at start, initialise lastLoc and...
 			lastLoc.time = loc.time
 			lastLoc.e = loc.e;
@@ -477,8 +477,8 @@ else {
 		notify("lo:"+lo+" hi:"+hi+" climb:"+climb);
 		*/
 		if((dist>10)||(turn>30)) { // add trackpoint after TESTING: 10m 100m or when direction changes > 30*
-			distance += dist;
-			heading = Math.round(direction);
+			distance+=dist;
+			heading=Math.round(direction);
 			addTP();
 			dist = 0;
 		}
@@ -783,7 +783,7 @@ else {
 	function measure(type,pt1,pt2) {
 		var dx = pt2.e-pt1.e;
 	    var dy = pt2.n-pt1.n;
-		if(type=="distance") return Math.sqrt(dx * dx + dy * dy);
+		if(type=="distance") return Math.sqrt(dx*dx+dy*dy);
 		var h; // heading
 		if(dy==0) {
 	        h=(dx>0)?90:270;
@@ -802,7 +802,7 @@ else {
 	
 	function notify(note) {
 		notifications.push(note);
-		while(notifications.length>10) notifications.shift();
+		while(notifications.length>20) notifications.shift();
 		console.log(note);
 	}
 	
