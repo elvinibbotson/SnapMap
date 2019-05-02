@@ -56,7 +56,7 @@ id("metric").addEventListener("change", function() {
 	id("menu").style.display = "none";
 });
 */
-id("tracks").addEventListener("click", listTracks);
+// id("tracks").addEventListener("click", listTracks);
 id('buttonSetCoords').addEventListener('click', function() {
 	var easting=id('easting').value;
 	var northing=id('northing').value;
@@ -90,10 +90,12 @@ id('buttonSetCoords').addEventListener('click', function() {
 		id('actionButton').style.display='block';
 	}
 })
-id("saveButton").addEventListener("click", saveTrack);
+// id("saveButton").addEventListener("click", saveTrack);
+/*
 id("cancelButton").addEventListener("click", function() {
 	id("saveDialog").style.display="none";
 });
+*/
 id("mapChooser").addEventListener('change', function() { // LOAD MAP IMAGE
 	var file = id('mapChooser').files[0];
 	console.log("map: "+file+" name: "+file.name);
@@ -186,7 +188,7 @@ else {
 // metric = window.localStorage.getItem("metric");
 // id('metric').checked = metric;
 	
-	
+/*	
 	function listTracks() {
 		document.getElementById("menu").style.display = "none";
 		// alert("list saved tracks - can load or delete");
@@ -196,12 +198,6 @@ else {
 		if(!tracks) return;
 		var names = JSON.parse(tracks).names;
 		notify("first track: "+names[0]);
-		/*
-		for(var i=0; i<names.length; i++) {
-			document.getElementById("list").innerHTML += "<li>"+names[i]+"</li>";
-		}
-		notify("list: "+document.getElementById("list").innerHTML);
-		*/
 		document.getElementById("list").innerHTML=""; // clear list
 		var html="";
 		for(var i=0; i<names.length; i++) {
@@ -221,7 +217,7 @@ else {
 		// show list with "tracks" title and X buttom to close without action
 		document.getElementById("list").style.display = "block";
 	}
-	
+*/	
 	function startMove(event) {
 		var touches=event.changedTouches;
 		x0=touches[0].clientX;
@@ -627,6 +623,7 @@ else {
 		window.localStorage.setItem('wpLocation', json);
 	}
 	*/
+	/*
 	function saveTrack() {
 	  var name = document.getElementById("trackName").value;
 	  var names=[];
@@ -646,7 +643,7 @@ else {
 		window.localStorage.setItem("wpTracks",json);
 		document.getElementById("saveDialog").style.display="none";
 	}
-	
+	*/
 	// UTILITY FUNCTIONS
 	function id(el) {
 		return document.getElementById(el);
