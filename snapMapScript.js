@@ -301,7 +301,7 @@ else {
 	}
 	*/
 	function addTP() {
-		notify("add trackpoint "+track.length);
+		notify("add trackpoint at "+loc.e+" "+loc.n+" total: "+track.length);
 		var tp={};
 		tp.e=loc.e;
 		tp.n=loc.n;
@@ -446,7 +446,7 @@ else {
 		}
 		else {
 			dist = measure("distance",loc,lastLoc); // distance since last averaged fix
-			notify('moved '+dist+"m");
+			notify('moved '+decimal(dist,1)+"m");
 			// if(dist > 5) moving += (loc.time - lastLoc.time);
 		}
 		lastLoc.time = loc.time
@@ -476,13 +476,12 @@ else {
 		}
 		notify("lo:"+lo+" hi:"+hi+" climb:"+climb);
 		*/
-		if((dist>100)||(turn>30)) { // add trackpoint after 100m or when direction changes > 30*
+		if((dist>10)||(turn>30)) { // add trackpoint after TESTING: 10m 100m or when direction changes > 30*
 			distance += dist;
 			heading = Math.round(direction);
 			addTP();
 			dist = 0;
 		}
-		// bng(); // convert loc/lon to BNG coords
 		mapX=centre.x-(loc.e-map.e)/(map.xScale*zoom);
 		mapY=centre.y-(map.n-loc.n)/(map.yScale*zoom);
 		id('mapHolder').style.left=mapX+'px';
