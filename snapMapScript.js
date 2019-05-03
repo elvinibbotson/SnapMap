@@ -54,6 +54,7 @@ id('minusButton').addEventListener('click', function() {
 		console.log('at '+mapX+','+mapY);
 		id('mapHolder').style.left=mapX+'px';
 		id('mapHolder').style.top=mapY+'px';
+		redraw();
 	}
 });
 id('plusButton').addEventListener('click', function() {
@@ -66,6 +67,7 @@ id('plusButton').addEventListener('click', function() {
 		mapY=centre.y-(map.n-loc.n)/(map.yScale*zoom);
 		id('mapHolder').style.left=mapX+'px';
 		id('mapHolder').style.top=mapY+'px';
+		redraw();
 	}
 });
 /*
@@ -178,6 +180,7 @@ id("actionButton").style.top=(screen.height-70)+'px';
 console.log("action button moved!");
 id("actionButton").style.display='block';
 id("map").style.display = 'block';
+redraw();
 /* loading map may need onload() action
 status=window.localStorage.getItem('map'); // URL of current map
 console.log('saved map: '+status);
