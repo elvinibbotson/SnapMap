@@ -180,7 +180,7 @@ function move(event) {
 	id('mapHolder').style.top=mapY+'px';
 	x0=x;
 	y0=y;
-	if(map.xScale>0) { // once map is calibrated, adjust and display coords
+	if(map.xScale>0 && !tracking) { // once map is calibrated, adjust and display coords
 		x=centre.x-mapX;
 		y=centre.y-mapY;
 		loc.e=Math.round(map.e+x*map.xScale*zoom);
@@ -242,7 +242,7 @@ function sampleLocation(position) {
 	var direction=measure("heading",track[t],loc); // heading since last trackpoint
 	var turn=Math.abs(direction-heading);
 	if(turn>180) turn=360-turn;
-	if((dist>10)||(turn>30)) { // add trackpoint after TESTING: 10m 100m or when direction changes > 30*
+	if((dist>30)||(turn>30)) { // add trackpoint every 30m or when direction changes > 30*
 		distance+=dist;
 		heading=Math.round(direction);
 		addTP();
@@ -326,7 +326,7 @@ function redraw() {
 	if(distance>0) {
 		mapCanvas.fillStyle='blue';
 		mapCanvas.textBaseline='baseline';
-		mapCanvas.font='Bold 16px Sans-Serif';
+		mapCanvas.font='Bold 24px Sans-Serif';
 		d=Math.round(distance+dist);
 		if(d<1000) d+="m";
 		else d=decimal(d/1000)+"km";
