@@ -23,19 +23,18 @@ var fix;
 var fixes=[];
 var track=[]; // array of track objects - locations, altitudes, timestamps, lengths, durations,...
 var accuracy,dist,distance,heading; // fix & track data
-var breadcrumb=new Image();
+var breadcrumb=new Image(10,10);
 var deg = "&#176;";
 var notifications=[];
+
+status=window.localStorage.getItem('map'); // URL of current map
+console.log('saved map: '+status);
 
 // EVENT LISTENERS
 console.log("add event listeners");
 id("actionButton").addEventListener("click", go);
-// id("stopButton").addEventListener("click", cease);
-// id("mapOverlay").addEventListener("click", moveTo);
 id("mapOverlay").addEventListener("touchstart", startMove);
-// id("mapOverlay").addEventListener("mousedown", startMove);
 id("mapOverlay").addEventListener("touchmove", move);
-// id("mapOverlay").addEventListener("mousemove", move);
 id("menuButton").addEventListener("click", function() {
 	console.log("toggle menu");
 	var display = id("menu").style.display;
@@ -70,15 +69,6 @@ id('plusButton').addEventListener('click', function() {
 		redraw();
 	}
 });
-/*
-id("metric").addEventListener("change", function() {
-	metric=this.checked;
-	window.localStorage.setItem('metric', metric);
-	console.log("metric is "+metric);
-	id("menu").style.display = "none";
-});
-*/
-// id("tracks").addEventListener("click", listTracks);
 id('buttonSetCoords').addEventListener('click', function() {
 	var easting=id('easting').value;
 	var northing=id('northing').value;
@@ -115,12 +105,6 @@ id('buttonSetCoords').addEventListener('click', function() {
 		id('actionButton').style.display='block';
 	}
 })
-// id("saveButton").addEventListener("click", saveTrack);
-/*
-id("cancelButton").addEventListener("click", function() {
-	id("saveDialog").style.display="none";
-});
-*/
 id("mapChooser").addEventListener('change', function() { // LOAD MAP IMAGE
 	var file = id('mapChooser').files[0];
 	console.log("map: "+file+" name: "+file.name);
@@ -130,9 +114,6 @@ id("mapChooser").addEventListener('change', function() { // LOAD MAP IMAGE
 		id('map').src=evt.target.result;
 		id('mapHolder').style.left=id('mapHolder').style.top=0;
 		mapX=mapY=0;
-		// map.w=id('map').width;
-		// map.h=id('map').height;
-		// console.log("map size: "+map.w+"x"+map.h);
 		redraw();
 		id('mapDialog').style.display='none';
 		var data=window.localStorage.getItem(mapName);
@@ -145,7 +126,7 @@ id("mapChooser").addEventListener('change', function() { // LOAD MAP IMAGE
 			loc.e=Math.round(map.e+centre.x*map.xScale*zoom);
 			loc.n=Math.round(map.n-centre.y*map.yScale*zoom);
 			id('heading').innerHTML=loc.e+' '+loc.n;
-			console.log("save mapName");
+			console.log("save mapName - size "+map.w+"x"+map.h);
 			window.localStorage.setItem('map',mapName);
 		}
 		else {
@@ -155,14 +136,9 @@ id("mapChooser").addEventListener('change', function() { // LOAD MAP IMAGE
 			status=0;
 			id('coordsDialog').style.display='block';
 		}
-		//id('map').style.width=sw+'px';
-		//id('map').style.height=sh+'px';
-		// id('map').style.left=10+'px';
-		// id('map').style.transform='rotate(45deg)';
-		// id('map').style.transform='scale(0.5)';
   	});
   	fileReader.readAsDataURL(file);
-  },false);
+},false);
 dist=distance=0;
 centre.x=screen.width/2;
 centre.y=screen.height/2;
@@ -181,532 +157,188 @@ console.log("action button moved!");
 id("actionButton").style.display='block';
 id("map").style.display = 'block';
 redraw();
-/* loading map may need onload() action
-status=window.localStorage.getItem('map'); // URL of current map
-console.log('saved map: '+status);
-if(status!='null') {
-	mapName=id('map').src=status;
-	console.log("map loaded "+id('map').width+"x"+id('map').height);
-	var data=window.localStorage.getItem(mapName);
-	console.log("saved data for "+mapName+": "+data);
-	if(data!=null) {
-		map=JSON.parse(data);
-		// map=window.localStorage.getItem(mapName);
-		id('actionButton').style.display='block';
-		console.log("loaded data for map "+mapName+" at "+map.e+","+map.n+"scales: "+map.xScale+"x"+map.yScale);
-	}
-	else {
-		id('coordsHeader').innerHTML="NW reference point";
-		id('easting').value='';
-		id('northing').value='';
-		status=0;
-		id('coordsDialog').style.display='block';
-	}
-	status = window.localStorage.getItem('loc'); // recover last location
-	console.log("location status: "+status);
-	if(status!='null') {
-		json = JSON.parse(status);
-		loc.e = json.e;
-		loc.n = json.n;
-	}
-	// centreMap(); // go to saved location
+id('actionButton').style.display='none';
+id('mapDialog').style.display='block';
+
+function startMove(event) {
+	var touches=event.changedTouches;
+	x0=touches[0].clientX;
+	y0=touches[0].clientY;
+	document.getElementById('menu').style.display='none';
 }
-else {
-*/
-	id('actionButton').style.display='none';
-	id('mapDialog').style.display='block';
-//}
 	
-/*	
-	function listTracks() {
-		document.getElementById("menu").style.display = "none";
-		// alert("list saved tracks - can load or delete");
-		// get list of saved tracks
-		var tracks = window.localStorage.getItem("wpTracks");
-		notify("tracks:" + tracks);
-		if(!tracks) return;
-		var names = JSON.parse(tracks).names;
-		notify("first track: "+names[0]);
-		document.getElementById("list").innerHTML=""; // clear list
-		var html="";
-		for(var i=0; i<names.length; i++) {
-  			var listItem = document.createElement('li');
-			listItem.index=i;
-	 		// listItem.classList.add('log-item');
-			// listItem.addEventListener('click', function(){app.logIndex=this.index; app.openLog();});
-			html="<button class='deleteButton'>";
-			html+=names[i]+"<br>";
-			// html+="----X"; // JUST TESTING!!!
-			listItem.innerHTML=html;
-			document.getElementById('list').appendChild(listItem);
-  		}
-		alert("list: "+document.getElementById("list").innerHTML);
-		// list with onclick action to load into track[] and draw track/display distance etc...
-		// ...plus X to delete from database (via "delete?" dialog)
-		// show list with "tracks" title and X buttom to close without action
-		document.getElementById("list").style.display = "block";
-	}
-*/	
-	function startMove(event) {
-		var touches=event.changedTouches;
-		x0=touches[0].clientX;
-		y0=touches[0].clientY;
-		// console.log("start drag at "+x0+","+y0);
-		// notify("start drag");
-		document.getElementById('list').style.display='none';
-		document.getElementById('menu').style.display='none';
-	}
-	
-	function move(event) {
-		document.getElementById('menu').style.display='none';
-		var touches=event.changedTouches;
-		x=touches[0].clientX;
-		y=touches[0].clientY;
-		// console.log("drag by "+x+"x"+y+"px");
-		mapX+=(x-x0);
-		mapY+=(y-y0);
-		// console.log('map at '+mapX+','+mapY);
-		id('mapHolder').style.left=mapX+'px';
-		id('mapHolder').style.top=mapY+'px';
-		// loc.lon-=(x-x0)/14400;
-		// loc.lat+=(y-y0)/24000;
-		x0=x;
-		y0=y;
-		// centreMap();
-		if(map.xScale>0) { // once map is calibrated, adjust and display coords
-			x=centre.x-mapX;
-			y=centre.y-mapY;
-			loc.e=Math.round(map.e+x*map.xScale*zoom);
-			loc.n=Math.round(map.n-y*map.yScale*zoom);
-			id('heading').innerHTML=loc.e+' '+loc.n;
-		}
-		if(track.length>0) redraw();
-	}
-	/*
-	function moveTo(event) {
-		document.getElementById("list").style.display = "none";
-		document.getElementById('menu').style.display='none';
-		x=sw/2-event.clientX;
-		y=sh/2-event.clientY;
-		console.log("move to "+x+", "+y+" from current position");
-		loc.lat+=y/24000;
-		loc.lon-=x/14400;
-		if(measuring) {
-			var node={};
-			node.lon=loc.lon;
-			node.lat=loc.lat;
-			nodes.push(node);
-			distance+=measure('distance',lastLoc.lon,lastLoc.lat,loc.lon,loc.lat);
-			console.log('distance: '+distance+"m");
-			lastLoc.lon=loc.lon;
-			lastLoc.lat=loc.lat;
-		}
-		centreMap();
-	}
-	*/
-	function addTP() {
-		notify("add trackpoint at "+loc.e+" "+loc.n+" total: "+track.length);
-		var tp={};
-		tp.e=loc.e;
-		tp.n=loc.n;
-		// tp.alt=loc.alt;
-		// tp.time=loc.time;
-		track.push(tp);
-		redraw();
-		/*
-		if(track.length<2) return;
-		var trip={};
-		trip.distance=decimal(distance+dist); // metres
-		trip.time=Math.round((loc.time-track[0].time)/60); // minutes
-		// trip.moving=Math.round(moving/60); // minutes not stopped
-		// trip.climb=climb; // metres
-		var json=JSON.stringify(trip);
-		// console.log("save trip "+json);
-		// window.localStorage.setItem('wpTrip', json);
-		*/
-	}
-	/*
-	function getFix() { // get fix on current location
-	alert('get fix');
-		if(navigator.geolocation) {
-			var opt={enableHighAccuracy: true, timeout: 15000, maximumAge: 0};
-			navigator.geolocation.getCurrentPosition(gotoFix,locationError,opt);
-		}
-	}
-	
-	function gotoFix(position) {
-		console.log("gotoFix");
-		lon=position.coords.longitude;
-		lat=position.coords.latitude;
-		loc.alt=position.coords.altitude;
-		if(loc.alt!=null) loc.alt=Math.round(loc.alt);
-		notify("fix at "+lon+","+lat+","+loc.alt);
-		bng();
-		alert('fix at '+loc.e+" "+loc.n);
-		mapX=centre.x-(loc.e-map.e)/map.xScale;
-		mapY=centre.y-(map.n-loc.n)/map.yScale;
-		id('mapHolder').style.left=mapX+'px';
-		id('mapHolder').style.top=mapY+'px';
+function move(event) {
+	document.getElementById('menu').style.display='none';
+	var touches=event.changedTouches;
+	x=touches[0].clientX;
+	y=touches[0].clientY;
+	// console.log("drag by "+x+"x"+y+"px");
+	mapX+=(x-x0);
+	mapY+=(y-y0);
+	// console.log('map at '+mapX+','+mapY);
+	id('mapHolder').style.left=mapX+'px';
+	id('mapHolder').style.top=mapY+'px';
+	x0=x;
+	y0=y;
+	if(map.xScale>0) { // once map is calibrated, adjust and display coords
+		x=centre.x-mapX;
+		y=centre.y-mapY;
+		loc.e=Math.round(map.e+x*map.xScale*zoom);
+		loc.n=Math.round(map.n-y*map.yScale*zoom);
 		id('heading').innerHTML=loc.e+' '+loc.n;
-		// centreMap();
-		document.getElementById("actionButton").innerHTML='<img src="goButton24px.svg"/>';
-		document.getElementById("actionButton").removeEventListener("click", getFix);
-		document.getElementById("actionButton").addEventListener("click", go);
-		ready=true;
-		window.setTimeout(timeUp,15000); // revert to fix button after 15 secs
 	}
+	if(track.length>0) redraw();
+}
 	
-	function timeUp() {
-		if(tracking) return;
-		console.log("times up - back to fix button");
-		document.getElementById("actionButton").innerHTML='<img src="fixButton24px.svg"/>';
-		document.getElementById("actionButton").removeEventListener("click", go);
-		document.getElementById("actionButton").addEventListener("click", getFix);
-		ready=false;
-	}
-	*/
-	
-	function go() { // start tracking location
-		tracking = true;
-		// track = [];
-		// loc = {};
-		// lastLoc = {};
-		// distance = 0;
-		// time0 = moving = 0;
-		// heading = 0;
-		// speed = 0;
-		// hi = lo = climb = 0;
-		notify("start tracking");
-		fix=0;
-		fixes=[];
-	    if (navigator.geolocation) {
-			var opt={enableHighAccuracy: true, timeout: 15000, maximumAge: 0};
-        		geolocator = navigator.geolocation.watchPosition(sampleLocation, locationError, opt);
-    	} else  {
-       		alert("Geolocation is not supported by this browser.");
-    	}
-		document.getElementById("actionButton").innerHTML='<img src="stopButton24px.svg"/>';
-		document.getElementById("actionButton").removeEventListener("click", go);
-		document.getElementById("actionButton").addEventListener("click", cease);
-		/* test BNG conversion
-		console.log("convert 52*39'27.2531N, 1*43'4.5177W to BNG");
-		lat=52.6575703;
-		lon=1.71792158;
-		bng();
-		*/
-	}
-	/*
-	function stopStart() {
-		console.log("stopStart");
-		if(tracking) pause();
-		else resume();
-	}
-	
-	function pause() { // pause location tracking
-		console.log("PAUSE");
-		addTP(); // add trackpoint on pause
-		tracking = false;
-		navigator.geolocation.clearWatch(geolocator);
-		document.getElementById("stopButton").style.display="block";
-		document.getElementById("actionButton").innerHTML='<img src="goButton24px.svg"/>';
-		// document.getElementById("actionButton").removeEventListener("click", go);
-		// document.getElementById("actionButton").removeEventListener("click", resume);
-		// document.getElementById("actionButton").addEventListener("click", resume);
-	}
-	
-	function resume() { // restart tracking after pausing
-		console.log("RESUME");
-		document.getElementById("stopButton").style.display="none";
-		document.getElementById("actionButton").innerHTML='<img src="pauseButton24px.svg"/>';
-		// document.getElementById("actionButton").removeEventListener("click", resume);
-		// document.getElementById("actionButton").addEventListener("click", pause);
-		tracking = true;
+function go() { // start tracking location
+	tracking = true;
+	notify("start tracking");
+	fix=0;
+	fixes=[];
+	if (navigator.geolocation) {
 		var opt={enableHighAccuracy: true, timeout: 15000, maximumAge: 0};
-		geolocator = navigator.geolocation.watchPosition(sampleLocation, locationError, opt);
-	}
+        	geolocator = navigator.geolocation.watchPosition(sampleLocation, locationError, opt);
+    } else  {
+    	alert("Geolocation is not supported by this browser.");
+    }
+	document.getElementById("actionButton").innerHTML='<img src="stopButton24px.svg"/>';
+	document.getElementById("actionButton").removeEventListener("click", go);
+	document.getElementById("actionButton").addEventListener("click", cease);
+	/* test BNG conversion using values in OS document
+	console.log("convert 52*39'27.2531N, 1*43'4.5177W to BNG");
+	lat=52.6575703;
+	lon=1.71792158;
+	bng();
 	*/
-	function sampleLocation(position) {
-		var accuracy=position.coords.accuracy;
-		// notify("fix "+fix+" accuracy: "+accuracy);
-		if(accuracy>50) return; // skip inaccurate fixes
-		fixes[fix]={};
-		fixes[fix].lon=position.coords.longitude;
-		fixes[fix].lat=position.coords.latitude;
-		fixes[fix].alt=position.coords.altitude;
-		fix++;
-		if(fix<3) return;
-		fix=0; // reset to get next three sample fixes
-		// var now=new Date();
-		// loc.time=Math.round(now.getTime()/1000); // whole seconds
-		lon=(fixes[0].lon+fixes[1].lon+fixes[2].lon)/3; // average location data
-		lat=(fixes[0].lat+fixes[1].lat+fixes[2].lat)/3;
-		// loc.alt=Math.round((fixes[0].alt+fixes[1].alt+fixes[2].alt)/3);
-		// notify(lon+","+lat+", "+loc.alt+"m accuracy:"+accuracy);
-		bng(); // convert lat/lon to BNG coords
-		notify('fix at '+loc.e+" "+loc.n);
-		if(track.length<1) { // at start, initialise lastLoc and...
-			// lastLoc.time = loc.time
-			lastLoc.e = loc.e;
-			lastLoc.n = loc.n;
-			addTP(); // ...add first trackpoint
-		}
-		else {
-			dist = measure("distance",loc,lastLoc); // distance since last averaged fix
-			notify('moved '+decimal(dist,1)+"m");
-			// if(dist > 5) moving += (loc.time - lastLoc.time);
-		}
-		// lastLoc.time = loc.time
+}
+
+function sampleLocation(position) {
+	var accuracy=position.coords.accuracy;
+	if(accuracy>50) return; // skip inaccurate fixes
+	fixes[fix]={};
+	fixes[fix].lon=position.coords.longitude;
+	fixes[fix].lat=position.coords.latitude;
+	fixes[fix].alt=position.coords.altitude;
+	fix++;
+	if(fix<3) return;
+	fix=0; // reset to get next three sample fixes
+	lon=(fixes[0].lon+fixes[1].lon+fixes[2].lon)/3; // average location data
+	lat=(fixes[0].lat+fixes[1].lat+fixes[2].lat)/3;
+	bng(); // convert lat/lon to BNG coords
+	notify('fix at '+loc.e+" "+loc.n);
+	if(track.length<1) { // at start, initialise lastLoc and...
 		lastLoc.e = loc.e;
 		lastLoc.n = loc.n;
-		var t=track.length-1; // most recent trackpoint
-		dist=measure("distance",loc,track[t]); // distance since last trackpoint
-		// var interval=loc.time-track[t].time;
-		// if(dist>0) speed = dist / interval; // current speed m/s
-		var direction=measure("heading",track[t],loc); // heading since last trackpoint
-		var turn=Math.abs(direction-heading);
-		if(turn>180) turn=360-turn;
-		/*
-		if((hi == 0) || ((lo - loc.alt) > 5)) {
-			hi = lo = loc.alt; // reset lo and hi at first trackpoint or new lo-point
-			notify("new lo (and hi)");
-		}
-		else if((loc.alt - hi) > 5) {
-			lo = hi;
-			hi = loc.alt; // climbing - set new hi-point
-			climb += (hi-lo); // increment total climbed
-			notify("climbing - new hi");
-		}
-		else if((hi - loc.alt) > 5) { // going over the top
-			hi = lo = loc.alt; // reset hi & lo until climbing again
-			notify("OTT - new hi & lo");
-		}
-		notify("lo:"+lo+" hi:"+hi+" climb:"+climb);
-		*/
-		if((dist>10)||(turn>30)) { // add trackpoint after TESTING: 10m 100m or when direction changes > 30*
-			distance+=dist;
-			heading=Math.round(direction);
-			addTP();
-			dist=0;
-		}
-		mapX=centre.x-(loc.e-map.e)/(map.xScale*zoom);
-		mapY=centre.y-(map.n-loc.n)/(map.yScale*zoom);
-		notify("move map to "+loc.e+","+loc.n+"("+mapX+","+mapY);
-		id('mapHolder').style.left=mapX+'px';
-		id('mapholder').style.top=mapY+'px';
-		id('heading').innerHTML=loc.e+' '+loc.n;
-		if(track.length>0) redraw();
-		// centreMap();
+		addTP(); // ...add first trackpoint
 	}
+	else {
+		dist = measure("distance",loc,lastLoc); // distance since last averaged fix
+		notify('moved '+decimal(dist,1)+"m");
+	}
+	lastLoc.e = loc.e;
+	lastLoc.n = loc.n;
+	var t=track.length-1; // most recent trackpoint
+	dist=measure("distance",loc,track[t]); // distance since last trackpoint
+	var direction=measure("heading",track[t],loc); // heading since last trackpoint
+	var turn=Math.abs(direction-heading);
+	if(turn>180) turn=360-turn;
+	if((dist>10)||(turn>30)) { // add trackpoint after TESTING: 10m 100m or when direction changes > 30*
+		distance+=dist;
+		heading=Math.round(direction);
+		addTP();
+		dist=0;
+	}
+	mapX=centre.x-(loc.e-map.e)/(map.xScale*zoom);
+	mapY=centre.y-(map.n-loc.n)/(map.yScale*zoom);
+	notify("move map to "+loc.e+","+loc.n+"("+mapX+","+mapY);
+	id('mapHolder').style.left=mapX+'px';
+	id('mapholder').style.top=mapY+'px';
+	id('heading').innerHTML=loc.e+' '+loc.n;
+	if(track.length>0) redraw();
+}
 	
-	function locationError(error) {
-		var message="";
-		switch (error.code) {
-			case error.PERMISSION_DENIED:
-				message="location request denied";
-				break;
-			case error.POSITION_UNAVAILABLE:
-				message="location not available";
-				break;
-			case error.TIMEOUT:
-				message="location timeout";
-				break;
-			case error.UNKNOWN_ERROR:
-				message="unknown loaction error";
-		}
-		alert(message);
+function locationError(error) {
+	var message="";
+	switch (error.code) {
+		case error.PERMISSION_DENIED:
+			message="location request denied";
+			break;
+		case error.POSITION_UNAVAILABLE:
+			message="location not available";
+			break;
+		case error.TIMEOUT:
+			message="location timeout";
+			break;
+		case error.UNKNOWN_ERROR:
+			message="unknown loaction error";
 	}
+	alert(message);
+}
 	
-	function cease(event) {
-		notify("CEASE track length is "+track.length+" trackpoints");
-		navigator.geolocation.clearWatch(geolocator);
-		tracking=false;
-		// document.getElementById("stopButton").style.display="none";
-		document.getElementById("actionButton").innerHTML='<img src="goButton24px.svg"/>';
-		document.getElementById("actionButton").removeEventListener("click", cease);
-		document.getElementById("actionButton").addEventListener("click", go);
-		// document.getElementById("heading").innerHTML = "White Peak";
-		redraw();
-		/* IF TRACK HAS MORE THAN 5 TRACKPOINTS, OFFER TO SAVE TO DATABASE USING DIALOG TO GIVE DEFAULT (EDITABLE) NAME 'YYMMDD-HH:MM'
-		if(track.length>1) { // ************  CHANGE TO 5 **************
-			var now = new Date();
-			var name = now.getYear()%100 + months.substr(now.getMonth()*3,3) + now.getDate() + '.'; // YYmonDD
-			var t =now.getHours();
-			if(t<10) name+="0";
-			name+=(t+":");
-			t=now.getMinutes();
-			if(t<10) name+="0";
-			name+=t; // YYmonDD.HH:MM
-			notify("track name: "+name);
-			document.getElementById("trackName").value = name;
-			document.getElementById("saveDialog").style.display = "block";
-		}
-		*/
-	}
+function addTP() {
+	notify("add trackpoint at "+loc.e+" "+loc.n+" total: "+track.length);
+	var tp={};
+	tp.e=loc.e;
+	tp.n=loc.n;
+	track.push(tp);
+	redraw();
+}
+	
+function cease(event) {
+	notify("CEASE track length is "+track.length+" trackpoints");
+	navigator.geolocation.clearWatch(geolocator);
+	tracking=false;
+	document.getElementById("actionButton").innerHTML='<img src="goButton24px.svg"/>';
+	document.getElementById("actionButton").removeEventListener("click", cease);
+	document.getElementById("actionButton").addEventListener("click", go);
+	// document.getElementById("heading").innerHTML = "White Peak";
+	redraw();
+}
 
-	function redraw() {
-		var i, p, x, y, r, d, t;
-		notify("redraw - tracking is "+tracking);
-		mapCanvas.clearRect(0, 0, screen.width, screen.height);
-		mapCanvas.lineWidth = 5;
-		mapCanvas.strokeStyle = 'rgba(0,0,255,0.75)';
-		mapCanvas.fillStyle = 'blue';
-		mapCanvas.textBaseline = 'top';
+function redraw() {
+	var i, p, x, y, r, d, t;
+	notify("redraw - tracking is "+tracking);
+	mapCanvas.clearRect(0,0,screen.width,screen.height);
+	if(track.length>0) {
+		notify("draw "+track.length+" trackpoints");
+	    for(i=1;i<track.length;i++) {
+	    	p=track[i];
+	    	x=(p.e-map.e)/(map.xScale*zoom)+mapX;
+	    	y=(map.n-p.n)/(map.yScale*zoom)+mapY
+	    	// mapCanvas.fillRect(x-2,y-2,4,4);
+	    	mapCanvas.drawImage(breadcrumb,x-5,y-5);
+	    }
+	}
+	console.log("draw cross");
+	mapCanvas.lineWidth=5;
+	mapCanvas.strokeStyle='rgba(0,0,255,0.75)';
+	mapCanvas.beginPath();
+	mapCanvas.moveTo(centre.x-20,centre.y); // blue cross at current location
+	mapCanvas.lineTo(centre.x-5,centre.y);
+	mapCanvas.moveTo(centre.x+5,centre.y);
+	mapCanvas.lineTo(centre.x+20,centre.y);
+	mapCanvas.moveTo(centre.x,centre.y-20);
+	mapCanvas.lineTo(centre.x,centre.y-5);
+	mapCanvas.moveTo(centre.x,centre.y+5);
+	mapCanvas.lineTo(centre.x,centre.y+20);
+	mapCanvas.stroke();
+	notify('draw distance');
+	if(distance>0) {
+		mapCanvas.fillStyle='blue';
+		mapCanvas.textBaseline='baseline';
 		mapCanvas.font='Bold 16px Sans-Serif';
-		/*
-		if(distance>0) { // display distance travelled and height climbed so far
-			var gradient = mapCanvas.createLinearGradient(0,32,0,182);
-			gradient.addColorStop(0,'white');
-			gradient.addColorStop(1,'#FFFFFF00');
-			mapCanvas.fillStyle = gradient;
-			mapCanvas.fillRect(0,32,screen.width,182);
-			mapCanvas.fill();
-			mapCanvas.fillStyle = 'black';
-			mapCanvas.font = 'Bold 16px Sans-Serif';
-			mapCanvas.textAlign = 'left';
-			d = distance+dist;
-			// if(metric) { // metric units
-				d=Math.round(d);
-				if(d<1000) mapCanvas.fillText('m',5,45);
-				else {
-					mapCanvas.fillText('km',5,45);
-					d=decimal(d/1000);
-				}
-			}
-			else { // miles & yards
-				d=Math.round(d*1.093613); // nearest yard to latest trackpoint
-				if(d<1760) mapCanvas.fillText('yds',5,45);
-				else {
-					mapCanvas.fillText('miles',5,45);
-					d=decimal(d/1760);
-				}
-			}
-			if(track.length>0) {
-				mapCanvas.fillText('time (moving)', 100, 45);
-				t=Math.floor((loc.time-track[0].time)/60); // total trip time (minutes)
-				mapCanvas.font = 'Bold 24px Sans-Serif';
-				var text = Math.floor(t/60)+":";
-				t%=60;
-				if(t<10) text += "0";
-				text += t + " ("
-				t = Math.floor(moving/60); // minutes not stopped
-				text += (Math.floor(t/60)+":");
-				t%=60;
-				if(t<10) text += "0";
-				text += (t +")");
-				mapCanvas.fillText(text, 100, 60);
-			}
-			mapCanvas.font = 'Bold 36px Sans-Serif';
-			mapCanvas.fillText(d,5,57);
-			mapCanvas.font = 'Bold 16px Sans-Serif';
-			mapCanvas.textAlign = 'right';
-			// mapCanvas.fillText(((metric)?"m":"ft")+" climbed",screen.width-5,45);
-			mapCanvas.font = 'Bold 36px Sans-Serif';
-			// mapCanvas.fillText(Math.round((metric)?climb:climb*3.281),screen.width-5,57);
-		}
-		if(tracking && speed>0) { // if tracking show current altitude with coordinates
-			gradient = mapCanvas.createLinearGradient(0,sh-150,0,sh);
-			gradient.addColorStop(0,'#FFFFFF00');
-			gradient.addColorStop(1,'white');
-			mapCanvas.fillStyle = gradient;
-			mapCanvas.fillRect(0,sh-150,screen.width,screen.height);
-			mapCanvas.fillStyle = 'black';
-			mapCanvas.textBaseline = 'alphabetic';
-			mapCanvas.textAlign = 'left';
-			mapCanvas.font = 'Bold 60px Sans-Serif';
-			// mapCanvas.fillText(Math.round(((metric)?3.6:2.237)*speed), 5,sh-20);
-			mapCanvas.font = 'Bold 16px Sans-Serif';
-			// mapCanvas.fillText((metric)?"kph":"mph", 5,sh-5);
-			mapCanvas.font = 'Bold 36px Sans-Serif';
-			d=Math.round((heading+11.25)/22.5); // 16 compass directions: N, NNE, NE,...
-			d=compass.substr(d*3,3); // compass point eg. NNE
-			mapCanvas.fillText(d,100,screen.height-20);
-		}
-		*/
-		mapCanvas.beginPath(); // draw current track as blue breadcrumb trail
-	    if (track.length > 1) {
-			notify("draw track - "+track.length+" trackpoints");
-	    	// p = track[0];
-	    	for(i=1;i<track.length;i++) {
-	    		p=track[i];
-	    		x=(p.e-map.e)/(map.xScale*zoom)+mapX;
-	    		y=(map.n-p.n)/(map.yScale*zoom)+mapY
-	    		// mapCanvas.fillRect(x-2,y-2,4,4);
-	    		mapCanvas.drawImage(breadcrumb,x-5,y-5);
-	    	// x=mapX-(map.e-p.lon)*14400;
-	    	// y=mapY-(p.lat-map.n)*24000;
-	    	// mapCanvas.moveTo(x, y);
-	    	// for (i = 1; i < track.length; i++) {
-	    	//	p = track[i];
-	       	// x=mapX-(map.e-p.lon)*14400;
-	       	// y=mapY-(p.lat-map.n)*24000;
-	       	// mapCanvas.lineTo(x, y);
-	    	}
-			// if(tracking) mapCanvas.lineTo(centre.x,centre.y);
-		}
-		console.log("draw cross");
-		mapCanvas.moveTo(centre.x-20,centre.y); // blue cross at current location
-		mapCanvas.lineTo(centre.x-5,centre.y);
-		mapCanvas.moveTo(centre.x+5,centre.y);
-		mapCanvas.lineTo(centre.x+20,centre.y);
-		mapCanvas.moveTo(centre.x,centre.y-20);
-		mapCanvas.lineTo(centre.x,centre.y-5);
-		mapCanvas.moveTo(centre.x,centre.y+5);
-		mapCanvas.lineTo(centre.x,centre.y+20);
-		mapCanvas.stroke();
-		notify('draw distance');
-		if(distance>0) {
-			d = distance+dist;
-			// if(metric) { // metric units
-			d=Math.round(d);
-			if(d<1000) d+="m";
-			else d=decimal(d/1000)+"km";
-			mapCanvas.fillText(d,centre.x+5,centre.y+5);
-		}
+		d=Math.round(distance+dist);
+		if(d<1000) d+="m";
+		else d=decimal(d/1000)+"km";
+		mapCanvas.fillText(d,5,screen.height-20);
 	}
-	/*
-	function centreMap() { // move map to current location
-		// notify("centre map");
-	  var i, x, y;
-	  mapX = (map.e - loc.lon) * 14400 + sw / 2;
-	  mapY = (loc.lat - map.n) * 24000 + sh / 2;
-		// console.log("map position: "+mapX+", "+mapY);
-		var map = document.getElementById("map");
-		map.style.left = mapX+"px";
-		map.style.top = mapY+"px";
-		var string = dm(loc.lat, true) + " " + dm(loc.lon, false) + " ";
-		if(tracking) string += (metric)?loc.alt+"m":Math.round(3.281*loc.alt)+"ft";
-		document.getElementById('heading').innerHTML = string;
-		redraw();
-		json=JSON.stringify(loc);
-		// console.log("save location "+json);
-		window.localStorage.setItem('wpLocation', json);
-	}
-	*/
-	/*
-	function saveTrack() {
-	  var name = document.getElementById("trackName").value;
-	  var names=[];
-	  notify("save track "+name);
-		var tracks = window.localStorage.getItem("wpTracks");
-		if(tracks) {
-		  names = JSON.parse(tracks).names;
-		  notify(names.length+" tracks already saved");
-		  if((name.length<1)||(names.indexOf(name)>=0)) return;
-		}
-		json = JSON.stringify(track);
-		window.localStorage.setItem(name, json);
-		names.push(name);
-		tracks={};
-		tracks.names=names
-		var json=JSON.stringify(tracks);
-		window.localStorage.setItem("wpTracks",json);
-		document.getElementById("saveDialog").style.display="none";
-	}
-	*/
-	// UTILITY FUNCTIONS
-	function id(el) {
-		return document.getElementById(el);
-	}
+}
+	
+// UTILITY FUNCTIONS
+	
+function id(el) {
+	return document.getElementById(el);
+}
 	
 	function bng() { // convert lon/lat to BNG coords
 		var p=lat*Math.PI/180; // loc/lat in radians
@@ -766,30 +398,6 @@ else {
 		console.log("fix is at BNG "+loc.e+" "+loc.n);	
 	}
 	
-	function dm(degrees, lat) {
-	    var ddmm;
-	    var negative = false;
-	    var n;
-	    if (degrees < 0) {
-	        negative = true;
-	        degrees = degrees * -1;
-	    }
-	    ddmm = Math.floor(degrees); // whole degs
-	    n = (degrees - ddmm) * 60; // minutes
-	    ddmm += deg;
-	    if (n < 10) ddmm += "0";
-	    ddmm += decimal(n) + "'";
-	    if (negative) {
-	        if (lat) ddmm += "S";
-	        else ddmm += "W";
-	    }
-	    else {
-	        if (lat) ddmm += "N";
-	        else ddmm += "E";
-	    }
-	    return ddmm;
-	}
-	
 	function measure(type,pt1,pt2) {
 		var dx = pt2.e-pt1.e;
 	    var dy = pt2.n-pt1.n;
@@ -825,10 +433,10 @@ else {
 	}
 
 // implement service worker if browser is PWA friendly
-	if (navigator.serviceWorker.controller) {
-		console.log('Active service worker found, no need to register')
-	} else { //Register the ServiceWorker
-		navigator.serviceWorker.register('sw.js').then(function(reg) {
-			console.log('Service worker has been registered for scope:'+ reg.scope);
-		});
-	}
+if (navigator.serviceWorker.controller) {
+	console.log('Active service worker found, no need to register')
+} else { //Register the ServiceWorker
+	navigator.serviceWorker.register('sw.js').then(function(reg) {
+		console.log('Service worker has been registered for scope:'+ reg.scope);
+	});
+}
