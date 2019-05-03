@@ -277,6 +277,7 @@ else {
 			loc.n=Math.round(map.n-y*map.yScale*zoom);
 			id('heading').innerHTML=loc.e+' '+loc.n;
 		}
+		if(track.length>0) redraw();
 	}
 	/*
 	function moveTo(event) {
@@ -490,6 +491,7 @@ else {
 		id('mapHolder').style.left=mapX+'px';
 		id('mapholder').style.top=mapY+'px';
 		id('heading').innerHTML=loc.e+' '+loc.n;
+		if(track.length>0) redraw();
 		// centreMap();
 	}
 	
