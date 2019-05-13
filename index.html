@@ -20,6 +20,9 @@
     <button id='plusButton' class='headerButton' aria-label='zoom in'></button>
 </header>
 <menu type="context" id="menu">
+	<p><menuitem id='loadMap' label='load map'>load map</menuitem></p>
+	<p><menuitem id='calibrate' label='calibrate map'>calibrate</menuitem></p>
+	<p><menuitem id='buildMap' label='build map'>build map</menuitem></p>
 	<p><menuitem id='notifications' label='notifications'>notifications</menuitem></p>
 </menu>
 <main class="main">
@@ -31,9 +34,9 @@
 </main>
 <div id="mapDialog" class="dialog-container">
 	<div class="dialog">
-		<div class="dialog-title">Load OS map image</div>
+		<div class="dialog-title">Load a map</div>
 		<input type="file" id="mapChooser">
-		<div class="dialog-body">This will replace anycurrent map.</div>
+		<div class="dialog-body">This will replace any current map.</div>
     	<div class="dialog-buttons">
 			<button id="buttonCancelImport" class="button">Cancel</button>
     	</div>
@@ -42,10 +45,24 @@
 <div id="coordsDialog" class="dialog">
 	<div id='coordsHeader' class="dialog-body"></div>
 	<div class="dialog-buttons">
-		E:<input id='easting' type="number" style="width: 4em;" min=0 max=999999>
-		N:<input id='northing' type="number" style="width: 4em;" min=0 max=999999>
+		E <input id='easting' type="number" style="width: 4em;" min=0 max=999999>
+		N <input id='northing' type="number" style="width: 4em;" min=0 max=999999>
 		<button id="buttonSetCoords" class="button">SET</button>
     </div>
+</div>
+<div id='mapBuilderDialog' class='dialog-container'>
+	<div class='dialog'>
+		<div class='dialog-title'>Build map from 4 screen grabs</div>
+		<div id='quadrant' class='dialog-body'></div>
+		<input type='file' id='quadrantChooser'>
+		<div class="dialog-buttons">
+			<!--name: <input id='buildName'>-->
+			<!--button id='saveBuild' class='button'>Save</button-->
+			<button id="cancelBuild" class="button">Cancel</button>
+    	</div>
+    	<div class='dialog-body'><img id='builtMap' width='200' height='100'/></div>
+	</div>
+	<
 </div>
 <script src="snapMapScript.js" async></script>
 </body>

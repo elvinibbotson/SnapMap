@@ -24,6 +24,9 @@ var fixes=[];
 var track=[]; // array of track objects - locations, altitudes, timestamps, lengths, durations,...
 var accuracy,dist,distance,heading; // fix & track data
 var breadcrumb=new Image(10,10);
+var quadrant='NW'; // 4 quadrants used by buildMap
+var mapQuadrant; // map image for one quadrant of built map
+var anchor; // point on canvas where quadrants meet
 var deg = "&#176;";
 var notifications=[];
 
@@ -40,6 +43,12 @@ id("menuButton").addEventListener("click", function() {
 	var display = id("menu").style.display;
 	id("menu").style.display = (display=="block")?"none":"block";
 });
+id('loadMap').addEventListener('click',function() {
+	id('actionButton').style.display='none';
+	id('menu').style.display='none';
+	id('mapDialog').style.display='block';
+})
+id('buildMap').addEventListener('click',mapBuilder);
 id('notifications').addEventListener('click',showNotifications);
 id('minusButton').addEventListener('click', function() {
 	console.log("zoom out loc.e: "+loc.e+" map.e: "+map.e+' xScale: '+map.xScale);
@@ -112,6 +121,7 @@ id("mapChooser").addEventListener('change', function() { // LOAD MAP IMAGE
 	var fileReader=new FileReader();
 	fileReader.addEventListener('load', function(evt) {
 		id('map').src=evt.target.result;
+		// save url as 'currentMap'?
 		id('mapHolder').style.left=id('mapHolder').style.top=0;
 		mapX=mapY=0;
 		redraw();
@@ -139,6 +149,29 @@ id("mapChooser").addEventListener('change', function() { // LOAD MAP IMAGE
   	});
   	fileReader.readAsDataURL(file);
 },false);
+
+id("quadrantChooser").addEventListener('change', function() { // LOAD MAP QUADRANT IMAGE
+	var file = id('quadrantChooser').files[0];
+	console.log(quadrant+" quadrant: "+file+" name: "+file.name);
+	var quadrantName=file.name;
+	var fileReader=new FileReader();
+	fileReader.addEventListener('load', function(evt) {
+		mapQuadrant=new Image();
+		mapQuadrant.onload=function() {
+			console.log('quadrant size: '+mapQuadrant.width+"x"+mapQuadrant.height);
+			mapBuilder();
+		}
+		mapQuadrant.src=evt.target.result;
+  	});
+  	fileReader.readAsDataURL(file);
+},false);
+
+id('cancelBuild').addEventListener('click',function() {
+	id('mapBuilderDialog').style.display='none';
+	id('mapCanvas').width=screen.width;
+	id('mapCanvas').height=screen.height;
+})
+
 dist=distance=0;
 centre.x=screen.width/2;
 centre.y=screen.height/2;
@@ -146,9 +179,10 @@ console.log("centre at "+centre.x+","+centre.y);
 breadcrumb.src="breadcrumb.svg";
 id("mapHolder").style.width = screen.width+'px';
 id("mapHolder").style.height = screen.height+'px';
-mapCanvas = id("mapCanvas").getContext("2d"); // set up drawing canvas
-id("mapCanvas").width = screen.width;
-id("mapCanvas").height = screen.height;
+mapCanvas=id("mapCanvas").getContext("2d"); // set up drawing canvas
+id("mapCanvas").width=screen.width;
+id("mapCanvas").height=screen.height;
+anchor={};
 id("actionButton").style.left=(screen.width-70)+'px';
 id("actionButton").style.top=(screen.height-70)+'px';
 // id("stopButton").style.left=(20)+'px';
@@ -158,7 +192,9 @@ id("actionButton").style.display='block';
 id("map").style.display = 'block';
 redraw();
 id('actionButton').style.display='none';
-id('mapDialog').style.display='block';
+// id('mapDialog').style.display='block';
+// TRY LOADING A MAP
+id('map').src="Downloads/SnapMap/localMap.jpg";
 
 function startMove(event) {
 	var touches=event.changedTouches;
@@ -332,6 +368,57 @@ function redraw() {
 		else d=decimal(d/1000)+"km";
 		mapCanvas.fillText(d,5,screen.height-20);
 	}
+}
+
+function mapBuilder() {
+	id('menu').style.display='none';
+	// id('buildName').disabled=true;
+	// id('saveBuild').disabled='true';
+	id('mapBuilderDialog').style.display='block';
+	id('quadrant').innerHTML='select <big>'+quadrant+'</big> quadrant';
+	switch(quadrant) {
+		case 'NW':
+			var w=mapQuadrant.width;
+			var h=mapQuadrant.height;
+			anchor.x=w;
+			anchor.y=h;
+			console.log("quadrant "+quadrant+" size: "+w+" x "+h);
+			id('mapCanvas').width=2*w;
+			id('mapCanvas').height=2*h;
+			console.log('built map size: '+id('mapCanvas').width+"x"+id('mapCanvas').height);
+			mapCanvas.drawImage(mapQuadrant,0,0);
+			quadrant='NE';
+			id('quadrant').innerHTML='select <big>'+quadrant+'</big> quadrant';
+			break;
+		case 'NE':
+			var w=mapQuadrant.width;
+			var h=mapQuadrant.height;
+			console.log('NE quadrant: '+w+"x"+h);
+			mapCanvas.drawImage(mapQuadrant,anchor.x,anchor.y-h);
+			quadrant='SW';
+			id('quadrant').innerHTML='select <big>'+quadrant+'</big> quadrant';
+			break;
+		case 'SW':
+			var w=mapQuadrant.width;
+			var h=mapQuadrant.height;
+			console.log('SW quadrant: '+w+"x"+h);
+			mapCanvas.drawImage(mapQuadrant,anchor.x-w,anchor.y);
+			quadrant='SE';
+			id('quadrant').innerHTML='select <big>'+quadrant+'</big> quadrant';
+			break;
+		case 'SE':
+			var w=mapQuadrant.width;
+			var h=mapQuadrant.height;
+			console.log('SE quadrant: '+w+"x"+h);
+			mapCanvas.drawImage(mapQuadrant,anchor.x,anchor.y);
+			id('quadrantChooser').disabled=true;
+			id('quadrant').innerHTML="<big>save image as new map file</big>";
+			var canvas=id('mapCanvas');
+			var imageURL=canvas.toDataURL();
+			console.log('image data ready');
+			id('builtMap').src=imageURL;
+			console.log('save image');
+	};
 }
 	
 // UTILITY FUNCTIONS
