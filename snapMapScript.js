@@ -194,7 +194,7 @@ redraw();
 id('actionButton').style.display='none';
 // id('mapDialog').style.display='block';
 // TRY LOADING A MAP
-id('map').src="Downloads/SnapMap/localMap.jpg";
+id('map').src="Internal storage/Download/SnapMaps/testMap.png";
 
 function startMove(event) {
 	var touches=event.changedTouches;
