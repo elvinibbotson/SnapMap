@@ -41,7 +41,7 @@ body {
 
 input, label, select {
     font-size: large;
-    padding-left: 10px;
+    margin-left: 15px;
 }
 .header {
   width: 100%;

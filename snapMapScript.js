@@ -47,7 +47,8 @@ id('loadMap').addEventListener('click',function() {
 	id('actionButton').style.display='none';
 	id('menu').style.display='none';
 	id('mapDialog').style.display='block';
-})
+});
+id('calibrate').addEventListener('click',calibrate);
 id('buildMap').addEventListener('click',mapBuilder);
 id('notifications').addEventListener('click',showNotifications);
 id('minusButton').addEventListener('click', function() {
@@ -121,6 +122,7 @@ id("mapChooser").addEventListener('change', function() { // LOAD MAP IMAGE
 	var fileReader=new FileReader();
 	fileReader.addEventListener('load', function(evt) {
 		id('map').src=evt.target.result;
+		id('map').onload=redraw();
 		// save url as 'currentMap'?
 		id('mapHolder').style.left=id('mapHolder').style.top=0;
 		mapX=mapY=0;
@@ -139,16 +141,27 @@ id("mapChooser").addEventListener('change', function() { // LOAD MAP IMAGE
 			console.log("save mapName - size "+map.w+"x"+map.h);
 			window.localStorage.setItem('map',mapName);
 		}
-		else {
+		else calibrate();
+		/*
+		{
 			id('coordsHeader').innerHTML="NW reference point";
 			id('easting').value='';
 			id('northing').value='';
 			status=0;
 			id('coordsDialog').style.display='block';
 		}
+		*/
   	});
   	fileReader.readAsDataURL(file);
 },false);
+
+function calibrate() {
+	id('coordsHeader').innerHTML="NW reference point";
+	id('easting').value='';
+	id('northing').value='';
+	status=0;
+	id('coordsDialog').style.display='block';
+}
 
 id("quadrantChooser").addEventListener('change', function() { // LOAD MAP QUADRANT IMAGE
 	var file = id('quadrantChooser').files[0];
@@ -192,9 +205,11 @@ id("actionButton").style.display='block';
 id("map").style.display = 'block';
 redraw();
 id('actionButton').style.display='none';
-// id('mapDialog').style.display='block';
-// TRY LOADING A MAP
-id('map').src="Internal storage/Download/SnapMaps/testMap.png";
+if(screen.width<800) { // phone - choose a map
+	id('buildMap').disabled=true;
+	id('mapDialog').style.display='block';
+}
+else id('menu').style.display='block'; // chromebook - show menu
 
 function startMove(event) {
 	var touches=event.changedTouches;
