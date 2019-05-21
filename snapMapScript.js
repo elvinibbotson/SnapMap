@@ -1,5 +1,6 @@
 "use strict";
 
+var sw,sh; // screen dimensions
 var centre={}; // coordinates of screen centre 
 var mapCanvas; // canvas for on-screen graphics
 var refNW={}; // two reference points
@@ -35,6 +36,15 @@ console.log('saved map: '+status);
 
 // EVENT LISTENERS
 console.log("add event listeners");
+window.onresize=function(evt) {
+	sh=window.innerHeight;
+	centre.y=sh/2;
+	id("mapHolder").style.height=sh+'px';
+	id("mapCanvas").height=sh;
+	id("actionButton").style.top=(sh-70)+'px';
+	// console.log("screen height: "+sh+"px");
+	redraw();
+};
 id("actionButton").addEventListener("click", go);
 id("mapOverlay").addEventListener("touchstart", startMove);
 id("mapOverlay").addEventListener("touchmove", move);
@@ -186,26 +196,26 @@ id('cancelBuild').addEventListener('click',function() {
 })
 
 dist=distance=0;
-centre.x=screen.width/2;
-centre.y=screen.height/2;
+sw=window.innerWidth;
+sh=window.innerHeight;
+centre.x=sw/2;
+centre.y=sh/2;
 console.log("centre at "+centre.x+","+centre.y);
 breadcrumb.src="breadcrumb.svg";
-id("mapHolder").style.width = screen.width+'px';
-id("mapHolder").style.height = screen.height+'px';
+id("mapHolder").style.width = sw+'px';
+id("mapHolder").style.height = sh+'px';
 mapCanvas=id("mapCanvas").getContext("2d"); // set up drawing canvas
-id("mapCanvas").width=screen.width;
-id("mapCanvas").height=screen.height;
+id("mapCanvas").width=sw;
+id("mapCanvas").height=sh;
 anchor={};
-id("actionButton").style.left=(screen.width-70)+'px';
-id("actionButton").style.top=(screen.height-70)+'px';
-// id("stopButton").style.left=(20)+'px';
-// id("stopButton").style.top=(screen.height-70)+'px';
+id("actionButton").style.left=(sw-70)+'px';
+id("actionButton").style.top=(sh-70)+'px';
 console.log("action button moved!");
 id("actionButton").style.display='block';
 id("map").style.display = 'block';
 redraw();
 id('actionButton').style.display='none';
-if(screen.width<800) { // phone - choose a map
+if(sw<800) { // phone - choose a map
 	id('buildMap').disabled=true;
 	id('mapDialog').style.display='block';
 }
@@ -349,7 +359,7 @@ function cease(event) {
 function redraw() {
 	var i, p, x, y, r, d, t;
 	notify("redraw - tracking is "+tracking);
-	mapCanvas.clearRect(0,0,screen.width,screen.height);
+	mapCanvas.clearRect(0,0,sw,sh);
 	if(track.length>0) {
 		notify("draw "+track.length+" trackpoints");
 	    for(i=1;i<track.length;i++) {
@@ -381,7 +391,7 @@ function redraw() {
 		d=Math.round(distance+dist);
 		if(d<1000) d+="m";
 		else d=decimal(d/1000)+"km";
-		mapCanvas.fillText(d,5,screen.height-20);
+		mapCanvas.fillText(d,5,sh-20);
 	}
 }
 
