@@ -285,7 +285,7 @@ function sampleLocation(position) {
 	fix=0; // reset to get next three sample fixes
 	lon=(fixes[0].lon+fixes[1].lon+fixes[2].lon)/3; // average location data
 	lat=(fixes[0].lat+fixes[1].lat+fixes[2].lat)/3;
-	bng(); // convert lat/lon to BNG coords
+	bng(); // convert lat/lon to BNG coords and set loc.e, loc.n
 	notify('fix at '+loc.e+" "+loc.n);
 	if(track.length<1) { // at start, initialise lastLoc and...
 		lastLoc.e = loc.e;
@@ -309,8 +309,10 @@ function sampleLocation(position) {
 		addTP();
 		dist=0;
 	}
-	mapX=centre.x-(loc.e-map.e)/(map.xScale*zoom);
-	mapY=centre.y-(map.n-loc.n)/(map.yScale*zoom);
+	x=(loc.e-map.e)/(map.xScale*zoom);
+	y=(map.n-loc.n)/(map.yScale*zoom);
+	mapX=centre.x-x;
+	mapY=y-centre.y;
 	notify("move map to "+loc.e+","+loc.n+"("+mapX+","+mapY);
 	id('mapHolder').style.left=mapX+'px';
 	id('mapholder').style.top=mapY+'px';
