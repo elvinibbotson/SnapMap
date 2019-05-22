@@ -14,9 +14,8 @@ var x, y, x0, y0; // horizontal and vertical coordinates/measurements
 var offset = {};
 var status; // location & trip data
 var json;
-var tracking = false;
-// var metric = false;
-var geolocator = null;
+var tracking=false;
+var geolocator=null;
 var lon, lat; // longitude and latitude (degrees)
 var loc={};
 var lastLoc={};
@@ -222,14 +221,16 @@ if(sw<800) { // phone - choose a map
 else id('menu').style.display='block'; // chromebook - show menu
 
 function startMove(event) {
+	id('menu').style.display='none';
+	if(tracking) return;
 	var touches=event.changedTouches;
 	x0=touches[0].clientX;
 	y0=touches[0].clientY;
-	document.getElementById('menu').style.display='none';
 }
 	
 function move(event) {
-	document.getElementById('menu').style.display='none';
+	id('menu').style.display='none';
+	if(tracking) return;
 	var touches=event.changedTouches;
 	x=touches[0].clientX;
 	y=touches[0].clientY;
@@ -241,7 +242,7 @@ function move(event) {
 	id('mapHolder').style.top=mapY+'px';
 	x0=x;
 	y0=y;
-	if(map.xScale>0 && !tracking) { // once map is calibrated, adjust and display coords
+	if(map.xScale>0) { // once map is calibrated, adjust and display coords
 		x=centre.x-mapX;
 		y=centre.y-mapY;
 		loc.e=Math.round(map.e+x*map.xScale*zoom);
@@ -351,9 +352,9 @@ function cease(event) {
 	notify("CEASE track length is "+track.length+" trackpoints");
 	navigator.geolocation.clearWatch(geolocator);
 	tracking=false;
-	document.getElementById("actionButton").innerHTML='<img src="goButton24px.svg"/>';
-	document.getElementById("actionButton").removeEventListener("click", cease);
-	document.getElementById("actionButton").addEventListener("click", go);
+	id("actionButton").innerHTML='<img src="goButton24px.svg"/>';
+	id("actionButton").removeEventListener("click", cease);
+	id("actionButton").addEventListener("click", go);
 	// document.getElementById("heading").innerHTML = "White Peak";
 	redraw();
 }
