@@ -312,7 +312,7 @@ function sampleLocation(position) {
 	x=(loc.e-map.e)/(map.xScale*zoom);
 	y=(map.n-loc.n)/(map.yScale*zoom);
 	mapX=centre.x-x;
-	mapY=y-centre.y;
+	mapY=centre.y-y;
 	notify("move map to "+loc.e+","+loc.n+"("+mapX+","+mapY);
 	id('mapHolder').style.left=mapX+'px';
 	id('mapholder').style.top=mapY+'px';
