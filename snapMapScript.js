@@ -215,6 +215,7 @@ id("map").style.display = 'block';
 redraw();
 id('actionButton').style.display='none';
 if(sw<800) { // phone - remove 'build map' menu option and proceed to choose a map
+	console.log("phone - no buildMap");
 	var opt=id('buildMap');
 	opt.parentNode.removeChild(opt);
 	id('mapDialog').style.display='block';
