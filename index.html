@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+  	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  	<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  	<title>SnapMap</title>
+  	<link rel="stylesheet" type="text/css" href="snapMapStyles.css">
+  	<link rel="manifest" href="manifest.json">
+  	<meta name="application-name" content="SnapMap">
+  	<meta name="msapplication-square150x150logo" content="icons/icon150px.png">
+  	<meta name="msapplication-square70x70logo" content="icons/icon75px.png">
+</head>
+<body>
+<header class="header">
+	<button id="menuButton" type="menu" menu="menu" class="headerButton" aria-label="Menu"></button>
+    <h1 id="heading" class="header__title">SnapMap</h1>
+    <button id='minusButton' class='headerButton' aria-label='zoom out'></button>
+    <small>zoom</small>
+    <button id='plusButton' class='headerButton' aria-label='zoom in'></button>
+</header>
+<menu type="context" id="menu">
+	<p><menuitem id='loadMap' label='load map'>load map</menuitem></p>
+	<p><menuitem id='reset' label='reset'>reset</menuitem></p>
+	<p><menuitem id='calibrate' label='calibrate map'>calibrate</menuitem></p>
+	<p><menuitem id='buildMap' label='build map'>build map</menuitem></p>
+	<p><menuitem id='notifications' label='notifications'>notifications</menuitem></p>
+</menu>
+<main class="main">
+	<div id="mapHolder"><img id='map'/></div>
+	<div id="mapOverlay">
+		<canvas id="mapCanvas" width="100" height="100"></canvas>
+	</div>
+	<div id='actionButton' class='round-button'><img src='goButton24px.svg'/></div>
+</main>
+<div id="mapDialog" class="dialog-container">
+	<div class="dialog">
+		<div class="dialog-title">Load a map</div>
+		<input type="file" id="mapChooser">
+		<div class="dialog-body">This will replace any current map.</div>
+    	<div class="dialog-buttons">
+			<button id="buttonCancelImport" class="button">Cancel</button>
+    	</div>
+	</div>
+</div>
+<div id="coordsDialog" class="dialog">
+	<div id='coordsHeader' class="dialog-body"></div>
+	<div class="dialog-buttons">
+		E <input id='easting' type="number" style="width: 4em;" min=0 max=999999>
+		N <input id='northing' type="number" style="width: 4em;" min=0 max=999999>
+		<button id="buttonSetCoords" class="button">SET</button>
+    </div>
+</div>
+<div id='mapBuilderDialog' class='dialog-container'>
+	<div class='dialog'>
+		<div class='dialog-title'>Build map from 4 screen grabs</div>
+		<div id='quadrant' class='dialog-body'></div>
+		<input type='file' id='quadrantChooser'>
+		<div class="dialog-buttons">
+			<!--name: <input id='buildName'>-->
+			<!--button id='saveBuild' class='button'>Save</button-->
+			<button id="cancelBuild" class="button">Cancel</button>
+    	</div>
+    	<div class='dialog-body'><img id='builtMap' width='200' height='100'/></div>
+	</div>
+	<
+</div>
+<script src="snapMapScript.js" async></script>
+</body>
+</html>
