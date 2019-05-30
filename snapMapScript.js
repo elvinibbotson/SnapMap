@@ -215,14 +215,16 @@ id("mapCanvas").height=sh;
 var json=window.localStorage.getItem('track');
 if(json) {
 	notify('track loaded: '+json);
+	/*
 	track=JSON.parse(json);
 	distance=0;
 	for(var i=1;i<track.length;i++) {
 		distance+=measure('distance',track[i],track[i-1]);
 	}
 	notify(track.length+' trackpoints - distance: '+distance+'m');
+	*/
 }
-else notify('no track saved');
+else alert('no track saved');
 anchor={};
 id("actionButton").style.left=(sw-70)+'px';
 id("actionButton").style.top=(sh-70)+'px';
